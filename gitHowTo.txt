@@ -80,6 +80,30 @@ First draft of the git quick-starter how-to file.
 
 Of course, to finish I press "esc", and then :wq
 
+(3) Amending a commit (instead of making a whole new separate commit).
+After changing, and then adding, the files, we do this kind of commit instead:
 
-(3) Pushing our changes up to the repository.
+$ git commit --amend
 
+(remember that "commit" has two m's, but "amend" only has one.)
+
+You'll see the same vi text-editing environment come up, but it already has your old message in there.  You can modify it or leave it there.  save and quit again, by pressing esc, then typing :wq and then it'll commit it, but if you look at the "git log" you'll see the number of commits hasn't changed.
+
+(4) Pushing our changes up to the remote server repository:
+
+$ git push
+Username for 'https://github.com': <username>
+Password for 'https://<username>@github.com': <password>
+To https://github.com/schmidticus/brannon-mpm-primer.git
+   3feb752..ff5a3dc  master -> master
+
+Note:  the owner of the repository must give you permission before you will be able to push to the repository.
+
+(5) Pulling other people's changes down from the remote server:
+
+$ git pull --rebase
+
+Note that you can only do this if everything is already committed and unmodified in your repository.
+
+(6) Rectifying merge conflicts:
+(TODO)
