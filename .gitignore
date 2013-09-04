@@ -1,0 +1,5 @@
+# Files we're ignoring:
+*.aux
+*.log
+*.out
+*.synctex.gz
