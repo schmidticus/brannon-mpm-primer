@@ -1,0 +1,85 @@
+How to use Git:
+
+Introduction:
+
+Git is similar to SVN in that it is a version control software. One major difference between Git and SVN is that when you use Git, you make a full copy of the entire repository to your local computer.  When you are done making your changes, then you "push" your changes up to the repository that is on the remote server.  This means that you can make commits without being connected to the remote server. It also means that, if you want, you can make a repository that is only on your computer (without a remote server at all).
+
+Getting Started:
+
+(1) First, you must "clone" the git repository from the remote server.
+In the command line, go to the directory where you want to save the repository.
+Then, do this command:
+
+$ git clone https://github.com/schmidticus/brannon-mpm-primer.git
+
+A folder called "brannon-mpm-primer" should be created in your directory.
+
+(2) Now, we can look at the state of the repository.
+Change directories into "brannon-mpm-primer".  Type:
+
+$ git status
+
+This is how you see which files have been modified, and which are ready to be committed, etc.
+You can also type:
+
+$ git log
+
+if you want to see the log of changes since the repository was first created.
+
+(3) Adding new documents to the repository.  In order to add a new document to the repository, put (or create) that file in the folder "brannon-mpm-primer".  We will use the document I am writing now as an example.  If I type,
+
+$ git status
+
+I see this:
+
+$ git status
+# On branch master
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	gitHowTo.txt
+nothing added to commit but untracked files present (use "git add" to track)
+
+Let's say I'm all done with the file.  Then, I write:
+
+$ git add gitHowTo.txt
+
+And then, if I see the status again I see:
+
+$ git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	new file:   gitHowTo.txt
+#
+
+If I had more files I wanted to add, I could do that.  But that's all I want to add, so I'm ready to commit.  I can write:
+
+$ git commit
+
+I am then sent into a vi text-editing environment where I can write a discription of the change I just made:
+
+First draft of the git quick-starter how-to file.
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Committer: Steven Schmidt <stevenschmidt@Inspector-Duckworth.local>
+#
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#       new file:   gitHowTo.txt
+#
+~                                                                                                                                              
+~                                                                                                                                              
+~                                                                                                                                              
+-- INSERT --
+
+
+Of course, to finish I press "esc", and then :wq
+
+
+(3) Pushing our changes up to the repository.
+
