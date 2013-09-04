@@ -1,0 +1,245 @@
+%\documentclass[12pt,reqno,titlepage]{book}
+\documentclass[fleqn]{book}
+%\usepackage{fullpage}%gives 1inch margins
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bm}%to get bold math symbols
+\usepackage[pdftex]{graphicx}
+\usepackage{verbatim}
+\usepackage[margin=2.5cm]{geometry}%for the margins headers footers etc
+\usepackage{hyperref}%for the hyperlinks-COOL and must use
+\usepackage[tt]{titlepic}%package i downloaded to put a pic in the titlepage
+\usepackage{helvet}
+\usepackage[usenames,dvipsnames]{color}%options to use names like redviolet and others
+\usepackage{xspace}
+\usepackage[mathscr]{eucal}%Defines which font to use with \mathscr
+\usepackage{amssymb}%needed for \mathbb
+\usepackage{enumerate}
+\usepackage{comment}
+
+%This lets you define your own style for showing the date. Below, we are defining the international standard format for dates.
+\usepackage[yyyymmdd,hhmmss]{datetime}
+\newdateformat{mydate}{\THEYEAR-\twodigit{\THEMONTH}-\twodigit{\THEDAY}}
+\usepackage{graphicx}
+%WARNING: If we instead use package ``graphics'', then this file would give an error
+% Paragraph ended before \Gin@iii was complete
+\graphicspath{{Figs/}}%use this to tell LaTeX where to look for images.
+\usepackage{rotating} %this is what gives landscape figures
+
+\makeatletter
+\newcommand\ackname{Acknowledgements}
+\if@titlepage
+  \newenvironment{acknowledgements}{%
+      \titlepage
+      \null\vfil
+      \@beginparpenalty\@lowpenalty
+      \begin{center}%
+        \bfseries \ackname
+        \@endparpenalty\@M
+      \end{center}}%
+     {\par\vfil\null\endtitlepage}
+\else
+  \newenvironment{acknowledgements}{%
+      \if@twocolumn
+        \section*{\abstractname}%
+      \else
+        \small
+        \begin{center}%
+          {\bfseries \ackname\vspace{-.5em}\vspace{\z@}}%
+        \end{center}%
+        \quotation
+      \fi}
+      {\if@twocolumn\else\endquotation\fi}
+\fi
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+%\usepackage[hidelinks]{hyperref} %This is simple way to make links black. Below shows how to do it with greater control...
+\usepackage{hyperref}
+
+\definecolor{mycitecolor}{rgb}{0.4,0.15,0.15}
+\definecolor{mylinkcolor}{rgb}{0.15,0.15,0.4}%dark-blue
+\definecolor{myurlcolor}{rgb}{0,0,0.5}
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly red boxes for cross-references and hyperlinks
+  urlcolor     = myurlcolor, %Colour for external hyperlinks
+  linkcolor    = mylinkcolor, %Colour of internal links
+  citecolor   = mycitecolor %Colour of citations
+}
+\urlstyle{rm} %so it doesn't use a typewriter font for URLs.
+
+%\url{http://ihome.ust.hk/~tanjim/verylongaddresslikethisone-111111zxzxzxzxzxzxzx
+%zxzxsqut_high.pdf}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Local macros
+
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+\newenvironment{MyAbstract}%
+{
+\leftskip=1in
+\rightskip=0.5in
+}
+{}
+%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  From rmb_crossref.sty
+\newcommand{\fig}[1]{Fig.~\ref{#1}}              % Figure
+\newcommand{\eqn}[1]{ Eq.~(\ref{#1})\xspace}
+\newcommand{\eqs}[2]{ Eqs.~(\ref{#1}) and (\ref{#2}) }
+\newcommand{\Equation}[1]{Equation~(\ref{#1})}   % Equation at beg. of sentence.
+%%% Usage: \showone{picture-basename}{width-fraction}
+\newcommand{\showone}[2]
+{%
+    \begin{center}
+        \includegraphics[width=#2\textwidth]{#1}%
+    \end{center}
+}
+\newcommand{\sect}[1]{Section~\ref{#1}}          % Section
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From rmb_draft.sty
+\definecolor{authorNoteColor}{rgb}{.8,0,0}
+\newcommand{\AuthorNote}[1]{{\color{authorNoteColor} \sffamily{\textbf{#1}}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From rmb_mathTypesetting.sty
+\newcommand{\mathscript}[1]{%
+    \ensuremath{\mathscr{#1}}%
+}%
+\newcommand{\scriptl}{\ell}
+\newcommand{\cth}{\ensuremath{c^\text{th}}\xspace}
+\newcommand{\eeth}{\ensuremath{e^\text{th}}\xspace}
+\newcommand{\ith}{\ensuremath{i^\text{th}}\xspace}
+\newcommand{\gth}{\ensuremath{g^\text{th}}\xspace}
+\newcommand{\pth}{\ensuremath{p^\text{th}}\xspace}
+\newcommand{\nth}{\ensuremath{n^\text{th}}\xspace}
+\newcommand{\Vector}[1]{\ensuremath{\bm{#1}}\xspace}%
+\newcommand{\Scalar}[1]{{\ensuremath{#1}}\xspace}%
+\newcommand{\definedEqual}{:=}%
+\newcommand{\boxit}[1]{\ensuremath{\boxed{\ensuremath{#1}}}}%
+\newcommand{\by}{\ensuremath{\times}}  %The box was dimensioned 2\by3\by4
+                                       %Alternative with siunitx package:
+                                       %\num{2 x 3 x 4}
+
+% usage:   \Derivpp{y}{x} will give dy/dx  with d's partials
+\newcommand{\Derivpp}[2]{
+        \ensuremath{\frac{\partial {#1}}{\partial {#2}}}
+}
+
+% usage:   \Derivppp{y}{x}{z} will give (dy/dx)_z partial deriv showing const
+\newcommand{\Derivppp}[3]{
+        \ensuremath{
+          {\left(
+               \frac{\partial {\ensuremath{#1}}}{\partial {\ensuremath{#2}}}
+        \right)}_{\ensuremath{#3}} }
+}%
+\newcommand{\dd}{\mathrm{d}}
+
+\newcommand{\Derivdd}[2]{
+        \ensuremath{\frac{\dd {#1}}{\dd {#2}}}
+}%
+\newcommand{\Deriv}[2]{\ensuremath{\cfrac{\dd{#1}}{\dd{#2}}}}%BB
+
+
+
+\newcommand{\Bnabla}{\ensuremath{\boldsymbol{\nabla}}}
+
+
+%------------ new (not in rmb_mathTypesetting.sty
+\newcommand{\aprx}[1]{\tilde{#1}}%
+\newcommand{\Array}[1]{\ensuremath{\hat{\bm{#1}}}\xspace}%
+\newcommand{\AArray}[1]{\ensuremath{\hat{\hat{\bm{#1}}}}\xspace}%
+\newcommand{\del}{\Bnabla}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From rmb_nomenclature.sty
+\newcommand{\oneD}{1-D\xspace}
+\newcommand{\twoD}{2-D\xspace}
+\newcommand{\threeD}{3-D\xspace}
+\newcommand{\x}{\Vector{x}}
+\newcommand{\Time}{\Scalar{t}}
+%------------ new (not in rmb_nomenclature)
+\newcommand{\NBF}{\Scalar{N}}%nodal basis function (also nodal shape function)
+\newcommand{\NBFa}{\Array{N}}%nodal basis array
+\newcommand{\NBFip}{\Scalar{\phi_{ip}}}%avg of \NBF_i over the \pth particle
+\newcommand{\gradNBFip}{\Scalar{\Vector{G}_{ip}}}%avg of \NBF_i over the \pth particle
+\newcommand{\gradNBF}{\Vector{G}}
+\newcommand{\gradNBFa}{\AArray{G}}%defined in each section
+\newcommand{\GBF}{\Scalar{\phi}}%grid basis function (also nodal shape function)
+\newcommand{\numnodes}{\ensuremath{{\nu_\text{n}}}\xspace}%
+\newcommand{\numelements}{\ensuremath{{\nu_\text{e}}}\xspace}%
+\newcommand{\numgaussTotal}{\ensuremath{{\nu_\text{G}}}\xspace}% number of gauss points TOTAL
+\newcommand{\numgaussOnElemente}{\ensuremath{{\nu_\text{g}(e)}}\xspace}%
+\newcommand{\manuscript}{manuscript\xspace}
+\newcommand{\ibase}{\Vector{i}}
+\newcommand{\jbase}{\Vector{j}}
+\newcommand{\kbase}{\Vector{k}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From rmb_paragraphStyles.sty
+%\renewcommand{\qedsymbol}{\ensuremath{\square}}
+\providecommand{\qed}{........................................................}
+\newcounter{example}[chapter]
+  \newenvironment{example}[1][]{
+    \refstepcounter{example}
+    {\setlength{\leftmargin}{9cm}}%
+    \subsubsection{EXAMPLE \thechapter.\arabic{example} #1}%
+%\sf
+    }
+    {
+\mbox{}
+     \\
+     \qed \\
+    }
+
+  \renewcommand{\theexample}{\thechapter.\arabic{example}}
+
+\newcommand{\Bal}{\begin{aligned}}
+\newcommand{\Eal}{\end{aligned}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From rmb_textStyles.sty
+\definecolor{DefnColor}{rgb}{.1,.1,.6}
+\newcommand{\Defn}[1]{{\color{DefnColor} {\sffamily{\textbf{#1}}}}}%
+\newcommand{\eg}{\textit{e.g.,~}}
+\newcommand{\ie}{\textit{i.e.,~}}
+\newcommand{\cf}{\textit{cf.,~}}
+\definecolor{Code}{rgb}{0,0,.6}
+\newcommand{\code}[1]{{\color{Code} {\textup{\texttt{#1}}}}}
+\newcommand{\etal}{\textit{et al.}\xspace}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% From ControllingOverbarWidth.tex tutorial
+\makeatletter
+\newsavebox\myboxA
+\newsavebox\myboxB
+\newlength\mylenA
+\newcommand*\xoverline[2][0.75]{%
+    \sbox{\myboxA}{$\m@th#2$}%
+    \setbox\myboxB\null% Phantom box
+    \ht\myboxB=\ht\myboxA%
+    \dp\myboxB=\dp\myboxA%
+    \wd\myboxB=#1\wd\myboxA% Scale phantom
+    \sbox\myboxB{$\m@th\overline{\copy\myboxB}$}%  Overlined phantom
+    \setlength\mylenA{\the\wd\myboxA}%   calc width diff
+    \addtolength\mylenA{-\the\wd\myboxB}%
+    \ifdim\wd\myboxB<\wd\myboxA%
+       \rlap{\hskip 0.5\mylenA\usebox\myboxB}{\usebox\myboxA}%
+    \else
+        \hskip -0.5\mylenA\rlap{\usebox\myboxA}{\hskip 0.5\mylenA\usebox\myboxB}%
+    \fi}
+\makeatother
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% unfiled
+\newcommand{\alt}{\text{*}}
+\newcommand{\gimpW}{\ensuremath{\omega}\xspace}
+
+
+
+
