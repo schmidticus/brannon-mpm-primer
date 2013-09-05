@@ -44,14 +44,14 @@ The ODE in \eqn{eq:LinearBarStrongForm} is called the \Defn{strong form} of the 
 \end{equation}
 The first term is integrated by parts\footnote{Namely, $\int_0^L u \Derivdd{v}{x} dx = uv \big|_0^L-\int_0^L u \Derivdd{v}{x} dx$. In this case the \emph{entire} expression in the brackets, $\left[E(x)A(x) \frac{\dd u(x)}{\dd x~~~}\right]$ is taken as the quantity ``$v$'', and $w(x)$ is taken as ``$u$''.}  to give the so-called \Defn{weak form} of the governing equation:
 \begin{equation}
-  E(x)A(x) w(x)u'(x)\big|_0^L-\int\limits_0^L EA w'(x)u'(x)\dd x  +  \int\limits_0^L w(x)f(x)\dd x=0
+  E(x)A(x) w(x)u'(x)\big|_0^L-\int\limits_0^L E(x)A(x) w'(x)u'(x)\dd x  +  \int\limits_0^L w(x)f(x)\dd x=0
 \qquad\forall w(x)
 \label{eq:LinearBarWeakForm}
 \end{equation}
 Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this may be written
 \begin{equation}
 \overset{\text{\Defn{WEAK FORM OF THE BAR PROBLEM}\hspace{8cm}}}{\boxit{\quad
- \int\limits_0^L E(x)A(x) w'(x)u'(x)\dd x = w(0)\tractionForce(0)+w(L)\tractionForce(L)  +  \int\limits_0^L w(x)f(x)\dd x=0
+ \int\limits_0^L E(x)A(x) w'(x)u'(x)\dd x = w(0)\tractionForce(0)+w(L)\tractionForce(L)  +  \int\limits_0^L w(x)f(x)\dd x
 \qquad\forall w(x)
 \quad}}
 \label{eq:LinearBarWeakFormWithForcesc}
@@ -219,7 +219,7 @@ In the finite-element method, a significant computational expense goes into eval
 \qquad\text{where}\quad
 \begin{cases}
 \text{\scriptsize{\textsf{For the stiffness integral:}}}& \zeta(x)=E(x)A(x)\gradNBFa(x)\gradNBFa^T(x)\\
-\text{\scriptsize{\textsf{For the force integral:}}}& \zeta=f(x)\NBFa(x)\\
+\text{\scriptsize{\textsf{For the force integral:}}}& \zeta(x)=f(x)\NBFa(x)\\
 \end{cases}
 \label{eq:LinearBarGenericIntegral}
 \end{equation}
@@ -228,9 +228,9 @@ Here, $\Omega$ represents the integration domain spanning from $x$=$0$ to $x$=$L
   \int\limits_\Omega \zeta(x) \dd x = \sum\limits_{e=1}^{\numelements}\int\limits_{\Omega_e} \zeta(x) \dd x
 \label{eq:LinearBarGenericIntegralBrokenIntoElements}
 \end{equation}
-where $\Omega_e$ represents the $\eeth$ element domain, and \numelements is the number of elements. Because finite elements fully tessellate the domain (i.e., they cover it without gaps or overlaps), this reformulation of the integral entails no error or loss of generality.  Once the integral over the \emph{entire} domain has been recast this way in terms of element integrals, a conventional FEM integrator will then employ Gauss integration to evaluated each element integral, thus ultimately giving
+where $\Omega_e$ represents the $\eeth$ element domain, and \numelements is the number of elements. Because finite elements fully tessellate the domain (i.e., they cover it without gaps or overlaps), this reformulation of the integral entails no error or loss of generality.  Once the integral over the \emph{entire} domain has been recast this way in terms of element integrals, a conventional FEM integrator will then employ Gauss integration to evaluate each element integral, thus ultimately giving
 \begin{equation}
-  \int\limits_\Omega \zeta(x) \dd x = \sum\limits_{e=1}^{\numelements}\int\limits_{\Omega_e} \zeta(x) \dd x \approx \sum\limits_{e=1}^{\numelements}\sum\limits_{g=1}^{\numgaussOnElemente}\int\limits_{\Omega_e} \zeta(x_{ge}) \omega_{ge} \dd x
+  \int\limits_\Omega \zeta(x) \dd x = \sum\limits_{e=1}^{\numelements}\int\limits_{\Omega_e} \zeta(x) \dd x \approx \sum\limits_{e=1}^{\numelements}\sum\limits_{g=1}^{\numgaussOnElemente} \zeta(x_{ge}) \omega_{ge} \dd x
 \label{eq:oneDFEMstyleIntegration}
 \end{equation}
 where \numgaussOnElemente denotes the number of gauss points used on the \eeth element, $x_{ge}$ is the location of the \gth Gauss point on the \eeth element, and $\omega_{ge}$ is the associated Gauss weight factor.  As seen, this method of evaluating the FEM integrals requires function evaluations at a finite number of locations (the Gauss points). Consequently, the FEM code user does not have to write computer software functions for the problem's material, structural, and loading functions.\footnote{Namely, the spatially varying stiffness $E(x)$, area $A(x)$, and body force $f(x)$.} Instead, the FEM code user only needs to supply arrays containing values of these functions at the Gauss points!  
@@ -273,7 +273,7 @@ In the previously discussed traditional FEM formulation, all problem data\footno
 One difficulty in describing MPM formulations is the notational headaches of distinguishing between numerous countable entities. As in the FEM formulation, we still have a countable number of nodes on the grid. In the MPM, we also have a countable number of material points whose locations must be distinguished from grid node locations. Sometimes, we even need to the left and right endpoints of a particle's domain (ends of the pillbox shapes in the figure). To alleviate some notational clutter in MPM discussions, it is fairly common (\cf \cite{Bardenhagen2004}) for MPM formulations to adopt the convention that the letter of the alphabet used in indices (subscripts) defines the intended meaning as follows:
 \begin{itemize}
   \item Index $i$ stands for a grid node, and $\sum_i$ refers to a sum over all grid nodes. For example, $x_i$ refers to the location of the \ith grid node.
-  \item Index $p$ stands for an MPM particle, and $\sum_p$ refers to a sum over all MPM particles.  For example, $x_p$ refers to the location of the \pth grid node. This convention supercedes the double subscripting notation used in \fig{fig:particlesOnOneDgrid}.\footnote{The double-subscripting can always be reinstated (as needed) to refer to particular particles. For example, the location of the $29^\text{th}$ particle would be denoted $x_{p_{29}}$ in order to distinguish it from the $29^\text{th}$ grid node location, which would be denoted $x_{i_{29}}$}
+  \item Index $p$ stands for an MPM particle, and $\sum_p$ refers to a sum over all MPM particles.  For example, $x_p$ refers to the location of the \pth particle. This convention supercedes the double subscripting notation used in \fig{fig:particlesOnOneDgrid}.\footnote{The double-subscripting can always be reinstated (as needed) to refer to particular particles. For example, the location of the $29^\text{th}$ particle would be denoted $x_{p_{29}}$ in order to distinguish it from the $29^\text{th}$ grid node location, which would be denoted $x_{i_{29}}$}
   \item Index $e$ stands for a grid element (sometimes called a ``cell'' in MPM formulations).
   \item Index $c$ stands for an MPM particle ``corner.''  The name \Defn{corner} is inherited from terminology of \twoD formulations, where a particle corner is a vertex of a polygon-shaped domain associated with the particle. In \oneD, each particle has only two corners, located at $x_p\pm r_p$, where $r_p$ is the \Defn{particle radius} (equal to half of the particle length).\footnote{Some extensions to MPM might allow the particle location $x_p$ to be located somewhere other than the particle centroid, but it is assumed that you can make appropriate revisions in that case.} Also, the double-indexed position, $x_{cp}$ refers to the \cth corner of the \pth particle.  It is important to write this with the $c$ written before the $p$, as we intend to later assign a different meaning to $x_{pc}$.
   \item The MPM formulation, derived below, introduces a double-index quantity, $\NBFip$, equal to an average of the grid's \ith nodal basis function $\NBF_i$ over the \pth particle domain $\Omega_p$.
