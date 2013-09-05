@@ -1,0 +1,87 @@
+\section{Nonlinear small-deformation transient \oneD bar problem}
+\AuthorNote{The following is a cut-n-paste of the static nonlinear analysis.  I need to revise it to include the inertial acceleration term, similar to what was done in the linear transient section earlier.  SS: can you do the needed modifications here, using the linear transient section as a guide?}
+For the \oneD bar problem with material nonlinearity, the governing equations are
+\begin{equation}
+\Bal
+  &\frac{\dd~~}{\dd x}\left[A(x) \sigma(x)\right]+f(x)=0 \qquad  &          &\text{on domain $\Omega$ defined by }0<x<L& \\
+  &\sigma(x)=\xi(\varepsilon(x),x)                  && \text{subject to Robin BCs: } \\
+  &\varepsilon(x)=\frac{\dd u(x)}{\dd x~~~}         &&\alpha_0 \tractionForce(0)+\beta_0 u(0)=\gamma_0 \\
+&\text{ }                                                  &&\alpha_L \tractionForce(L)+\beta_L u(L)=\gamma_L 
+\Eal
+\label{eq:nonLinearBarStrongForm}
+\end{equation}
+Here, $\xi(\varepsilon,x)$ is a ``blackbox'' nonlinear elastic constitutive model giving stress from strain $\varepsilon$.  Note that the linear bar problem discussed in the previous section is recovered by choosing $\xi(\varepsilon,x)=E(x)\varepsilon$.  
+In the Robin boundary conditions, 
+\begin{equation}
+  \tractionForce(0)\definedEqual -A(0)\sigma(0)
+\qquad\text{and}\qquad
+  \tractionForce(L)\definedEqual  A(L)\sigma(0)
+\label{eq:nonLinboundaryForces}
+\end{equation}
+As in the previous linear bar analysis, these forces are defined to be positive when pointing to the right, in the direction of increasing $x$, while positive stresses correspond to tension (thus accounting for the negative in the first force definition, since a tensile force on the left end of the bar would point to the left). 
+All other variables in these equations are defined as they were in \eqn{eq:LinearBarStrongForm}. In what follows, we progress through the same sort of analysis steps as in the linear case, making appropriate adjustments for material nonlinearity.
+
+
+The strong form of the governing equation in \eqn{eq:nonLinearBarStrongForm} is multiplied by an arbitrary weight function  $w(x)$, and then integrated over the domain from $x=0$ to $x=L$:
+\begin{equation}
+  \int\limits_0^L \frac{\dd~~}{\dd x}\left[A(x) \sigma(x)\right] w(x)\dd x  +  \int\limits_0^L f(x)w(x)\dd x=0
+\qquad\forall w(x)
+\end{equation}
+The first term is integrated by parts to give the so-called \Defn{weak form} of the governing equation:
+\begin{equation}
+  w(x) A(x) \sigma(x) \big|_0^L-\int\limits_0^L w'(x) A(x) \sigma(x)\dd x  +  \int\limits_0^L w(x)f(x)\dd x=0
+\qquad\forall w(x)
+\label{eq:nonLinearBarWeakForm}
+\end{equation}
+Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this may be written
+\begin{equation}
+ \int\limits_0^L w'(x)A(x) \sigma(x) \dd x = w(0)\tractionForce(0)+w(L)\tractionForce(L)  +  \int\limits_0^L w(x)f(x)\dd x=0
+\label{eq:nonLinearBarWeakFormWithForcesc}
+\end{equation}
+
+
+
+
+
+
+\subsection{Traditional FEM formulation for the transient nonlinear \oneD bar}
+\subsection{Converting the \oneD transient nonlinear FEM solver to an MPM solver}
+
+
+
+
+
+
+\subsection{MPM Algorithm for the \oneD transient nonlinear bar}
+\AuthorNote{Steve, I didn't get to this section yet, but the previous sections should address many of your questions. The basic algorithm for transient FEM is...}
+Governing equation:
+\begin{equation}
+ \boxit{\Array{f}^\text{int} +  \Array{f}^\text{ext} = \AArray{M}\Array{a}}
+\label{eq:discrFequalMa}
+\end{equation}
+where $\Array{a}$ is the nodal acceleration, the internal and external force vectors are defined the same as in the previous section except, for transient dynamics, they are \emph{known} at the beginning of the timestep from the initial conditions.  The consistent mass matrix is
+\begin{equation}
+  \AArray{M}=\int\limits_0^L \rho(x)\NBFa \NBFa^T \dd x
+\qquad\text{That is, }
+  M_{ij}=\int\limits_0^L \rho(x)\NBF_i(x) \NBFa_j(x) \dd x
+\end{equation}
+A lumped mass matrix is defined to be a diagonal mass matrix with the \ith diagonal component defined to be the \ith row sum, so that
+\begin{equation}
+  m_i=\int\limits_0^L \rho(x)\NBF_i(x) \dd x
+\end{equation}
+When the mass matrix is lumped (and hence diagonal), its inverse is trivial. Thus, recalling that both internal and external nodal forces are known at the beginning of a time step, solving the force balance gives nodal accelerations $\Array{a}^0$ at the $0^\text{th}$ time step.  
+
+In general, given $\Array{a}^n$ at the beginning of a generic \nth time step, and given velocity $\Array{v}^n$ at the beginning of the step, the velocity at the end of the step is, with explicit time integration,
+\begin{equation}
+  \Array{v}^{n+1}=\Array{v}^{n}+\Array{a}^n \Delta \Time
+\end{equation}
+and position at the end of the step is, by Taylor series,
+\begin{equation}
+  \Array{x}^{n+1}=\Array{x}^{n}+\Array{v}^n \Delta \Time+\frac{1}{2}\Array{a}^n \Delta\Time^2
+\end{equation}
+With this velocity and position (and hence displacement) updated to the end of the step, you can compute the velocity gradient (which is the strain rate in \oneD problems) or the displacement gradient (which is the strain in \oneD problems). One or both of these is typically required by the constitutive model to update the stress $\sigma(x,t)$ at a Gauss point (or at an MPM particle) to the end of the time step, thus setting all initial conditions to start the cycle over to update the state through time to the next step. 
+
+WARNING: with this sort of explicit time integrator, the timestep must be set to a value about 1/10 as large as the amount of time it takes an acoustic wave to traverse a grid cell. For small-deformation linear elasticity, acoustic waves travel at a speed given by $\sqrt{E/\rho}$.
+
+\subsection{Intrinsic no-interpenetration bonus attribute of MPM}
+\AuthorNote{Need to add a section of two bars hitting each other}

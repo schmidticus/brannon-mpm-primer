@@ -1,0 +1,285 @@
+
+
+
+
+\section{Nonlinear transient \twoD elasticity problems}
+\renewcommand{\gradNBFa}{\AArray{G}}%defined in each section
+\subsection{Traditional FEM notation and formulation for the transient nonlinear \twoD elastica problem}
+
+As the reader is assumed to be familiar with the finite-element method (FEM), this section is primarily focused on defining our notational preferences. 
+
+\subsection{\twoD FEM grid, elements, nodes, and shape functions}
+An FEM solution to a differential equation begins by introducing a body-fitted grid that tessellates the spatial domain into \Defn{elements}.\footnote{A \Defn{tesselation} breaks up a physical domain, here called a \Defn{body}, into a set of subdomains without gaps or overlaps.} 
+%
+In \twoD, some FEM codes break the body into quadrilateral elements, while other FEM codes use triangles (see \fig{fig:QuadAndTriangleMesh}). Higher-order methods use increasingly complicated shapes, but all choices have in common that the element shape is determined from special points on the element called \Defn{nodes}. The reader is presumed to be very comfortable working with nodes, elements, and \Defn{connectivity} (\ie the mapping of local node numbers on an element to/from global node numbers on the mesh).
+
+
+
+
+
+\begin{figure}
+\showone{QuadAndTriangleMesh}{1.0}
+\caption{(a)quadrilateral mesh (b)triangle mesh. Image permission still needed from \cite{Khoei2008}}
+\label{fig:QuadAndTriangleMesh}
+\end{figure}
+
+
+
+%
+The reader is further expected to know that, associated with the \ith node is a spatially varying the \Defn{nodal basis function} $\NBF_i(\x)$ (also called the \Defn{shape function}\footnote{Purists use the term \Defn{shape function} to refer to the function defined on an element, while \Defn{nodal basis function} is defined on the entire domain. Thus, for example, several different linear shape functions are used to construct the single classic ``tent'' nodal basis function, which certainly is not linear -- it is piecewise linear! We will make no such distinction between \textit{shape function} and \textit{nodal basis function}, as the intended meaning is always clear from context.}), such that a discretized approximation of a field $f(\x,\Time)$, which varies with position \x and time \Time, is\footnote{Here and throughout this primer, broadly applicable equations will be given in their general form for transient \threeD problems, where \x denotes the position vector and \Time is time. The reader is expected to know how to revise these formulas for special case situations such as \oneD problems (where $x$ is just a scalar) and/or for statics problems (where dependence on time is absent). Most of the upcoming examples will be limited to \oneD and \twoD problems for clarity.}
+
+
+\begin{equation}
+  \aprx{f}(\x,\Time)=\sum\limits_{i=1}^{\numnodes} \aprx{f}_i(\Time) \NBF_i(\x)
+\label{eq:fieldOnGridc}
+\end{equation}
+{\samepage{
+where a tilde $(\sim)$ is used to distinguish between an exact field $f$ and its approximation $\aprx{f}$. The summation over $i$ varies over the number of nodes \numnodes, and $\aprx{f}_i(\Time)$ is the time-varying \Defn{nodal value} of the approximate field associated with the \ith node, having a position vector denoted $\x_i$.\footnote{which might or might not be equal to the actual field $f(\x,t)$ at that node.}  The above expansion is called an \Defn{interpolation} if the shape functions satisfy
+\begin{equation}
+\boxit{
+ \quad \text{\Defn{Kronecker property:}}\qquad
+\NBF_i(\x_j)=\delta_{ij}=\begin{cases}
+                                1 &\text{ if }i=j
+                                \\
+                                0 & \text{ if }i\ne j
+                         \end{cases}
+\quad}
+\end{equation}
+}}
+The Kronecker property ensures that $\aprx{f}_i(\Time)=\aprx{f}(\x_i,\Time)$, but not necessarily \mbox{$\aprx{f}_i(\Time)=f(\x_i,\Time)$,} where (recall) $f(\x,t)$ is the exact function and $\aprx{f}(\x,t)$ is its approximation. In fact, as illustrated in \fig{fig:LinearFitNotInterpolation}, the best fit might not be an interpolation to that function -- it depends on how you define error!
+
+\begin{figure}
+\showone{InterpolationContrastedWithMinSquareError}{0.8}
+\caption{Exact function $f(\x,t)$ and two choices for a piecewise linear fit $\aprx{f}(\x,t)$, differing only by the choice of nodal values $\aprx{f}_i(t)$. (a) Best five-node piecewise-linear fit to a function when ``best'' corresponds to minimizing nodal errors; in this case, the nodal values exactly match the function values at the nodes: $\aprx{f}_i(\Time)=f(x_i,\Time)$. (b) Best piecewise-linear fit when the goal is instead to minimize overall mean square error; in this case $\aprx{f}_i(\Time)\ne f(x_i,\Time)$.  In both graphs, dashed lines correspond to element boundaries. The piecewise linear fits (in red) use standard linear shape functions $\NBF_i(x)$, which therefore correspond to ``tent'' nodal basis functions that are often used in FEM analyses.}
+\label{fig:LinearFitNotInterpolation}
+\end{figure}
+
+Many FEM textbooks introduce a compact notation for the collection of shape functions and nodal values. Let $\NBFa(\x)$ denote the column array containing the shape functions:
+\begin{equation}
+  \NBFa(\x)\definedEqual
+{\begin{bmatrix}\NBF_1(\x) \\ \NBF_2(\x)  \\ \vdots  \\  \NBF_\numnodes(\x) \end{bmatrix}}
+\qquad\text{and therefore}\qquad
+\NBFa^T(\x)=[\NBF_1(\x),\NBF_2(\x),\ldots,\NBF_\numnodes(\x)]\;.
+\label{eq:ArrayNBFa}
+\end{equation}
+If we similarly define $\Array{f}\definedEqual[\aprx{f}_1,\ldots,\aprx{f}_\numnodes]^T$, the matrix versions of \eqn{eq:fieldOnGridc} are then
+\begin{equation}
+  \aprx{f}(\x,\Time)=\NBFa^T(\x)\Array{f}(t)=\Array{f}^T(t)\NBFa(\x)\;.
+\label{eq:fieldOnGrida}
+\end{equation}
+This notation will be adopted later when analyzing the weak form of the governing equations. 
+
+The Kronecker property is not required for a nodal basis function to provide an acceptable numerical approximation to a field. We will, however, require the nodal basis function to satisfy:
+\begin{equation}
+  \boxit{\quad
+\text{\Defn{Partition of unity: }}\quad
+\sum\limits_{i=1}^{\numnodes} \NBF_i(\x)\equiv 1\qquad\forall\x
+\quad}
+\label{eq:PartitionOfUnity}
+\end{equation}
+When this property holds, $\aprx{f}(\x,t)$ can be made to exactly represent a constant field by simply selecting each $\aprx{f}_i$ to equal that constant. 
+The following \textit{additional} property is needed to exactly represent a field that varies linearly in space:
+\begin{equation}
+  \boxit{\quad
+\text{\Defn{Linearly complete: }}\quad
+\sum\limits_{i=1}^{\numnodes} \x_i\NBF_i(\x)\equiv \x\qquad\forall\x
+\quad}
+\label{eq:LinearlyComplete}
+\end{equation}
+
+
+
+
+\subsubsection{What is the finite-element method, really?}
+In order to declare that a numerical solver is using the finite-element method, we assert that each nodal basis function must have all of the following properties:
+\begin{enumerate}[i.]
+  \item The body must be tesselated into subdomains called elements. To be a tesselation, the elements must not overlap each other, and their union must represent an approximation of the body without gaps.  Moreover, the elements must be constructed in a systematic way from discrete points on or inside the body, called nodes, such that each element is formed from a finite set of nodes. Generally one node is used to form multiple elements. Any two elements that share a node are said to be \Defn{neighboring elements}.
+  \item A field $f(\x,\Time)$ must be approximated by $\aprx{f}(\x,\Time)\definedEqual\sum\limits_1^\numnodes \aprx{f}_i(\Time) \NBF_i(\x)$.
+  \item Each $\NBF_i(\x)$ must be associated with nodes on tesselation domains (elements) and be nonzero only over the.
+  \item Each $\NBF_i(\x)$ must satisfy the Kronecker property:  $\NBF_i(\x_j)=\delta_{ij}$
+  \item Each $\NBF_i(\x)$ must satisfy partition of unity: $\sum\limits_{i=1}^{\numnodes} \NBF_i(\x)\equiv 1\qquad\forall\x$
+  \item Each $\NBF_i(\x)$ must be linearly complete: $\sum\limits_{i=1}^{\numnodes} \x_i\NBF_i(\x)\equiv \x\qquad\forall\x$
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsubsection{FEM notation for the gradient of a scalar field}
+Let $x$, $y$, and $z$ denote the \Defn{Cartesian components of the position vector} \x.  Let $\ibase$, $\jbase$, and $\kbase$ be the associated \Defn{unit basis vectors}.
+Let $s(\x,\Time)$ denote a scalar-valued function of position \x and time \Time. The gradient of this field is a vector defined by
+\begin{equation}
+  \Derivpp{s}{\x}=\del s
+=\Derivpp{s}{x}\ibase
++\Derivpp{s}{y}\jbase
++\Derivpp{s}{z}\kbase
+\end{equation}
+Applying this definition to the expansion in \eqn{eq:fieldOnGridc} gives
+\begin{equation}
+  \Derivpp{\aprx{f}}{\x}=\sum\limits_{i=1}^{\numnodes} \aprx{f}_i(\Time) \gradNBF_i(\x)
+\qquad\text{where}\qquad
+\gradNBF_i(\x)\definedEqual\Derivpp{\NBF_i}{\x}
+\label{eq:gradfieldOnGridc}
+\end{equation}
+Equivalently, using the ``nabla'' (del) notation,
+\begin{equation}
+  \del\aprx{f}(\x,\Time)=\sum\limits_{i=1}^{\numnodes} \aprx{f}_i(\Time) \gradNBF_i(\x)
+\qquad\text{where}\qquad
+\gradNBF_i(\x)\definedEqual\del\NBF_i(\x)
+\label{eq:delfieldOnGridc}
+\end{equation}
+
+Let us now introduce a matrix $\gradNBFa$ whose \ith row contains the components of the gradient of the \ith shape function:
+\begin{equation}
+  \gradNBFa\definedEqual
+\begin{bmatrix}
+\Derivpp{\NBF_1}{x} & \Derivpp{\NBF_1}{y} & \Derivpp{\NBF_1}{z} \\
+\Derivpp{\NBF_2}{x} & \Derivpp{\NBF_2}{y} & \Derivpp{\NBF_2}{z} \\
+                 & \vdots           &                  \\
+\Derivpp{\NBF_\numnodes}{x} & \Derivpp{\NBF_\numnodes}{y} & \Derivpp{\NBF_\numnodes}{z} \\
+\end{bmatrix}
+\end{equation}
+Recalling that $\Array{f}$ denotes the \numnodes\by1 array containing nodal values of the field, the matrix notation for \eqn{eq:gradfieldOnGridc} is
+\begin{equation}
+  \underset{1\by3}{\Derivpp{\aprx{f}}{\x}}= 
+\underset{1\by\numnodes}{\Array{f}^T(\Time)}
+\underset{\numnodes\by3}{\gradNBFa(\x)}
+\label{eq:gradfieldOnGridcMatrixA}
+\end{equation}
+or, taking the transpose of both sides,
+\begin{equation}
+  \underset{3\by1}{\Derivpp{\aprx{f}}{\x}}= 
+\underset{3\by\numnodes}{\gradNBFa^T(\x)}
+\underset{\numnodes\by1}{\Array{f}(\Time)}
+\label{eq:gradfieldOnGridcMatrixB}
+\end{equation}
+Here, the undersets show the dimensions of each matrix for clarity. Since $\del f$ is a physical vector having three components, the above two equations clarify that these components may be arranged as either a 3\by1 or 1\by3 array.
+
+\subsubsection{FEM notation for vector fields and their gradients}
+Let $\Vector{u}=u_x \ibase + u_y \jbase + u_z \kbase$ denote a generic vector (like displacement) in \threeD.  Suppose that this generic vector is a field, $\Vector{u}(\x,\Time)$, which is described approximately in terms of the basis functions by
+\begin{equation}
+  \aprx{\Vector{u}}(\x,\Time)\approx\sum\limits_{i=1}^{\numnodes} \aprx{\Vector{u}}_i(\Time) \NBF_i(\x)
+\label{eq:vecfieldOnGridc}
+\end{equation}
+%
+We define the \threeD component array for the left-hand side of this equation vector using a ``single hat'' notation:
+\begin{equation}
+  \Array{u}(\x,\Time)\definedEqual\begin{bmatrix}
+                               \aprx{u}_x(\x,\Time) \\ 
+                               \aprx{u}_y(\x,\Time) \\ 
+                               \aprx{u}_z(\x,\Time)
+                        \end{bmatrix}
+\end{equation}
+For each node, there is an associated nodal vector $\Vector{\aprx{u}}_i(\Time)$.  This \manuscript will use a DOUBLE-hat notation to refer to the \numnodes\by3 matrix whose \ith row contains the three components $\Vector{u}_i$. That is,
+\begin{equation}
+  \AArray{u}(\Time)\definedEqual
+\begin{bmatrix}
+\aprx{u}_{1x}(\Time) & \aprx{u}_{1y}(\Time) &  \aprx{u}_{1z}(\Time) \\
+\aprx{u}_{2x}(\Time) & \aprx{u}_{2y}(\Time) &  \aprx{u}_{2z}(\Time) \\
+              &     \vdots    &                \\
+\aprx{u}_{\numnodes x}(\Time) & \aprx{u}_{\numnodes y}(\Time) &  \aprx{u}_{\numnodes z}(\Time)
+\end{bmatrix}
+\end{equation}
+Thus, recalling that \eqn{eq:ArrayNBFa}, the matrix form of \eqn{eq:vecfieldOnGridc} is
+\begin{equation}
+  \Array{u}=\AArray{u}^T(\Time)\NBFa(\x)
+\end{equation}
+
+
+As a special case, let $\Array{x}$ denote the component array of the position vector \x, and let $\AArray{x}$ denote the matrix of node locations as follows:
+\begin{equation}
+  \Array{x}\definedEqual\begin{bmatrix}
+                               x \\ 
+                               y \\ 
+                               z
+                        \end{bmatrix}
+\qquad\text{and}\qquad
+  \AArray{x}\definedEqual
+\begin{bmatrix}
+x_{1} & y_{1} &  z_{1} \\
+x_{2} & y_{2} &  z_{2} \\
+              &     \vdots    &                \\
+x_{\numnodes} & y_{\numnodes} &  z_{\numnodes}
+\end{bmatrix}
+\end{equation}
+Then the matrix form of \eqn{eq:LinearlyComplete} is
+\begin{equation}
+  \boxit{\quad
+\text{\Defn{Linearly complete: }}\quad
+\Array{x}=\AArray{x}^T\NBFa(\x)
+\quad}
+\label{eq:highDimLinearlyComplete}
+\end{equation}
+
+The gradient of a generic vector field $\Vector{u}(\x,\Time)$ is a second-order tensor, denoted $\partial\Vector{u}/\partial\x$, having a 3\by 3 component matrix given by
+\begin{equation}
+\left[\Derivpp{\Vector{u}}{\x}\right]\definedEqual
+\begin{bmatrix}
+\Derivpp{u_x}{x} & \Derivpp{u_x}{y} & \Derivpp{u_x}{z} \\
+\Derivpp{u_y}{x} & \Derivpp{u_x}{y} & \Derivpp{u_y}{z} \\
+\Derivpp{u_z}{x} & \Derivpp{u_z}{y} & \Derivpp{u_z}{z}
+\end{bmatrix}
+\end{equation}
+Applying this definition, the gradient of the \emph{approximate} vector field is evaluated by the matrix multiplication
+
+
+
+\begin{equation}
+  \underset{3\by3}{\Derivpp{\aprx{\Vector{u}}}{\x}}= 
+\underset{3\by\numnodes}{\AArray{u}^T(\Time)}
+\underset{\numnodes\by3}{\gradNBFa(\x)}
+\label{eq:gradfieldOnGridcMatrixC}
+\end{equation}
+
+
+
+
+
+
+
+
+\newpage
+description of the field  described by using nodal basis functions (also called element shape functions\footnote{Purists prefer the phrase \Defn{element shape function} to refer to the function that applies on an element, while the nodal basis function applies over the entire domain. Thus, for example, a linear shape function has the equation of a straight line, but the nodal basis function is the assembly of shape functions into the form of a so-called ``tent function,'' which is certainly not linear -- it is piecewise linear.}) and nodal values mapping from discrete  on the FEM grid to any 
+
+,  more generally any convex polygon, to represent particle domains, which more accurately represents the boundary and thus gives lower errors on the same mesh resolution.  In both (a) and (b), note that the particle density is generally
+\begin{figure}
+\showone{CPDIstairSteppingGeometry}{0.7}
+\label{fig:CPDIstairSteppingGeometry}
+\caption{MPM particles (small hollow circles) distributed within an overlaid rectilinear grid (dashed lines). The rectangles around the particles represent the physical domain of material occupied by each particle. (a) A pixelated description of an angled beam has a jagged (stair-stepped) boundary, which will give errors in an MPM simulation that would be comparable to using FEM with the same jagged mesh. (b) So-called ``conforming'' particle domains, are shown here as tilted rectangles, and these might be more complicated convex polygons in more complicated geometries.}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+Because this tutorial treats MPM as an extension of the finite-element method, you should be able to convert an existing conventional FEM code to an MPM code without much difficulty.\footnote{At Sandia National Laboratories, for example, a mature FEM code was converted to MPM in only one week, and simulations were run and visualized only a week after that.} Some reasons to add an MPM option to an FEM code are:
+\begin{itemize}
+\item Simulations can be run on complicated geometries, such as intricate porous structures, without the need for difficult material-based nodal connectivity tables that are used in conventional FEM to track material adjacent to any given element. 
+\item The geometry for an MPM simulation can be initialized directly from voxel information from a computed tomography (CT) scan.\footnote{A voxel is the \threeD analog of a pixel in \twoD.} A voxel-based representation of a body treats the body as a collection of cuboids, somewhat like a Lego model of a structure. Such a representation is possible with both FEM and MPM (each having comparable errors caused by poor description of angled boundaries, such as those evident in \fig{fig:CPDIstairSteppingGeometry}), so the real advantage of MPM is that it does not require defining \emph{material} connectivity information. Accordingly, an update to connectivity is not required to model subsequent material fracture.
+\item With MPM, the governing equations may be solved on a simple rectilinear grid, rather than requiring the body-fitted meshes used in traditional FEM.\footnote{Optionally, a body-fitted mesh may still be used to define the body in MPM while simultaneously using a simple overlaid rectilinear grid for the field equations, and doing so can significantly improve MPM accuracy.  Furthermore, a non-rectilinear mesh may be used with the MPM, but doing so entails additional computational cost.}
+\item FEM formulations save material constitutive data at Gauss points with displacement, velocity, and acceleration at nodes.  Under conditions of extremely large deformations, an FEM formulation must remesh to remove excessive element distortion. This process of remeshing then must be followed by remapping of the material constitutive data to the new locations of Gauss points. The remapping phase (which is essentially an averaging process) results in so-called \emph{advection} errors that can corrupt the physical meanings of material constitutive model data.\footnote{For example, mixing stress states in a plasticity model model might produce a new stress state violating the yield condition of the model. A fiber composite model that has the fiber direction (a unit vector) saved as a constitutive internal variable, then attempting to average these directions generally produces a vector that is no longer of unit length. While ad hoc workarounds can be usually found to assign physically admissible rezoned constitutive variables, those methods are rarely robust and certainly not defensible from a physical standpoint. The efforts to find workarounds for advection errors are so time consuming that it is far better to implement new methods, like MPM, that eliminate the need for advection corrections altogether.}  An MPM formulation saves all field variables (constitutive and kinematic) at material particles. These particles represent the body and flow through the overlaid grid, carrying all of their particle data with them. When an FEM code is revised to become an MPM code, the key algorithm adjustment is the insertion of a phase that maps data from particles to grid to solve the governing differential equations on the grid, followed by a mapping of the solution from the grid to particles to finish updating the state.  Because MPM formulations save data at particles, and because those particles may flow an arbitrary distance through the overlaid mesh, the MPM can model very large deformations without any advection errors. 
+\end{itemize}
+
+
+
+\subsection{Converting the \twoD transient nonlinear FEM solver to an MPM solver}
+\subsection{MPM Algorithm for the \twoD transient nonlinear bar}
+
+\section{Intrinsic no-interpenetration bonus attribute of MPM}
+\AuthorNote{We need to add the classic colliding disk problem here.}

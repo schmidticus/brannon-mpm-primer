@@ -1,0 +1,135 @@
+\section{Dynamic linear bar (acoustic wave analysis)}
+
+For dynamic small-deformation acoustic wave motion in a linear-elastic bar, the governing equation in \eqn{eq:LinearBarStrongForm} is revised as follows:
+\begin{equation}
+\Bal
+  &\frac{\partial~~}{\partial x}\left[E(x)A(x) \frac{\partial u(x,\Time)}{\partial x~~~}\right]+f(x,\Time)=\rho(x)A(x)\ddot{u}(x,\Time) \qquad  &          &\text{on domain $\Omega$ defined by }0<x<L& \\
+  &\text{~~~~~~~~~~~~~~~~subject to Robin BCs: }
+       &&\alpha_0 \tractionForce(0,\Time)+\beta_0 u(0,\Time)=\gamma_0 \\
+       &&\text{and ~~}&\alpha_L \tractionForce(L,\Time)+\beta_L u(L,\Time)=\gamma_L 
+\Eal
+\label{eq:LinearBarStrongFormAcoustic}
+\end{equation}
+where $\rho(x)$ is the spatially varying mass density of the material and $\ddot{u}(x,\Time)$ is the material acceleration: $\ddot{u}(x,\Time)\definedEqual\partial^2 u/\partial \Time^2$, assuming small strains. Key differences between this problem and the previous (static) bar problem are 
+\begin{itemize}
+  \item There are now two independent variables: position $x$ and time $\Time.$ Accordingly, where the previous ODE had regular derivatives, this PDE has partial derivatives.
+  \item The boundary conditions might vary with time (technically even the Robin parameters might vary with time).
+  \item A complete problem description requires specification of initial conditions, giving the stress and displacement at time $\Time=0$.
+\end{itemize}
+\subsection{Conventional FEM is used to spatially discretize the acoustic wave problem}
+As was done in the static case, the governing equation is multiplied by an arbitrary weight (test) function and integrated by parts to reduce the spatial derivative on the displacement to obtain the weak form,
+\begin{equation}
+\begin{aligned}
+ ~~&-\int\limits_0^L E(x)A(x) w'(x,\Time)u'(x,\Time)\dd x 
++ w(0,\Time)\tractionForce(0,\Time)+w(L,\Time)\tractionForce(L,\Time) 
++ \int\limits_0^L w(x,\Time)f(x,\Time)\dd x\\
+&= \int\limits_0^L w(x,\Time)\rho(x)A(x)\ddot{u}(x,\Time)\dd x
+\qquad\qquad\forall w(x,\Time)
+\end{aligned}
+\label{eq:LinearBarWeakFormWithForcesTransient}
+\end{equation}
+
+As in the static case, the approximations of \eqn{eq:uandwstatic} are again substituted into the weak form, except this time the nodal values are functions of time instead of being constants:
+\begin{equation}
+  \aprx{u}(x)=
+\NBFa^T(x) \Array{u}(t)
+\qquad\text{and}\qquad
+  w(x)=\Array{w}^T(t) \NBFa(x)
+\label{eq:uandwtransient}
+\end{equation}
+Substituting these into the weak form and asserting that the result must hold $\forall \Array{w}$ gives
+\begin{equation}
+-\AArray{K}\Array{u}+\Array{\tractionForce}  +  \Array{f}=\AArray{M}\ddot{\Array{u}}
+\label{eq:TransientLinearBarWeakFormDiscr}
+\end{equation}
+%
+%
+where, exactly as in the static case,
+\begin{equation}
+  \AArray{K} \definedEqual-\int\limits_0^L E(x)A(x) \gradNBFa(x)\gradNBFa^T(x)\dd x
+\end{equation}
+and, almost exactly as in the static case,
+\begin{equation}
+  \Array{\tractionForce}(t)=
+\NBFa(0)\tractionForce(0,t)+\NBFa(L)\tractionForce(L,t)
+\end{equation}
+and
+\begin{equation}
+\Array{f}(t)=
+\int\limits_0^L f(x,\Time)\NBFa(x)\dd \;x.
+\label{eq:TransientlinearBarBodyForceArray}
+\end{equation}
+
+On the right-hand side of the spatially discretized equation, the inertial acceleration term introduces a new quantity, the so-called consistent mass matrix defined by
+\begin{equation}
+\boxit{\quad
+ \text{\Defn{Consistent mass matrix: }}\qquad \AArray{M}\definedEqual\int\limits_0^L \NBFa(x)\NBFa^T(x) \rho(x) \dd x
+\quad}
+\end{equation} 
+In practice, the consistent mass matrix is often replaced with
+\begin{equation}
+\boxit{\quad
+ \text{\Defn{Lumped mass matrix: }}\qquad \AArray{M}\definedEqual\int\limits_0^L \NBFa(x) \rho(x) \dd x
+\quad}
+\end{equation}
+
+
+The transient spatially discretized \eqn{eq:TransientLinearBarWeakFormDiscr} is a linear second-order system of ODEs in time. In practice, the single second-order ODE system is typically broken up into a larger system of single-order ODEs as follows:
+\begin{subequations}
+\begin{align}
+-\AArray{K}\Array{u}+\Array{\tractionForce}  +  \Array{f}&=\AArray{M}\Array{a}
+\label{eq:TransientLinearBarAcceleration}
+\\
+\Array{a}&=\dot{\Array{v}}
+\\
+\Array{v}&=\dot{\Array{u}}
+\end{align}
+\label{eq:TransientLinearBarWeakFormDiscrSplit}
+\end{subequations}
+
+
+
+For acoustic problems, this system is usually solved by simple explicit time integrator as follows: At the beginning of the first time step, the boundary forces are known as part of the initial conditions, and hence $\tractionForce$ is known at the beginning of the time step.  Likewise, the distributed load is given at the beginning of the timestep by $f(x,0)$, thus allowing $\Array{f}$ to be evaluated at the beginning of the step. Likewise, the mass matrix may be evaluated at the beginning of the step, and the acceleration at the beginning of the step is then found from solving \eqn{eq:TransientLinearBarAcceleration} for $\Array{a}$:
+\begin{equation}
+ \Array{a}^n= \AArray{M}^{-1}\left(-\AArray{K}\Array{u}^n+\Array{\tractionForce}^n  +  \Array{f}^n\right)
+\end{equation}
+Here, the superscript $n$ is used to indicate that this is evaluated at the beginning of the \nth timestep when $t=t^n$.
+When a lumped mass is used, the inverse of the mass matrix is trivial.
+  With the acceleration known at the beginning of the step, the velocity is updated to the end of the step by using a first-order Taylor series in time from $t=t^n$ to $t=t^{n+1}=t^n+\Delta t$, where $\Delta t$ is the timestep:
+\begin{equation}
+  \Array{v}^{n+1}=\Array{v}^n+\Array{a}^n\Delta t
+\end{equation}
+The displacement is integrated using a second-order Taylor series in time:
+\begin{equation}
+  \Array{u}^{n+1}
+=\Array{u}^n+\Array{v}^n \Delta t
++\frac{1}{2}\Array{a}(\Delta t)^2
+\end{equation}
+These are the updates of NODAL quantities.  Updates of particle quantities are done by mapping nodal acceleration and velocity from the grid to the particles, and then the second-order Taylor series integration is performed at the particle to update the particle position.
+\AuthorNote{SS: Check carefully if this is what Uintah does. Check if this is what Ali described in our CPDI papers.}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Intrinsic no-interpenetration bonus attribute of MPM}
+\AuthorNote{I need to add a problem of two bars bumping into each other, showing that the MPM ensures that they will bounce away from each other without any additional coding of the algorithm -- this behavior comes ``for free!''}
+
+
+
+
+

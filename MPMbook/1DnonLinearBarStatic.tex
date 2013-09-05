@@ -1,0 +1,204 @@
+
+\section{Adding material nonlinearity to the \oneD static bar}
+Let us now assume negligible accelerations so that we can focus on the complications that arise from material nonlinearity (\ie when Hooke's law no longer applies).
+The goal of this section is to show how to generalize the linear static bar problem to allow material nonlinearity.  In particular, we want to treat the constitutive model as a `black box' called by the host FEM or MPM framework.
+
+
+There are two forms of nonlinearity in realistic mechanics problems: 
+\begin{itemize}
+  \item \Defn{Geometric nonlinearity} arises from large motions of the body so that now there is a significant difference between the initial and deformed locations of a point in the body. When large motions are possible, one must reconsider the problem functions, such as the distributed load $f(x)$ to decide if $x$ represents the initial or deformed location. For now, we will ignore geometric nonlinearity by assuming that displacements are small enough that we don't need to worry if $x$ is the initial or deformed position -- the two are approximately equal to each other. Neglecting geometric nonlinearity also frees us from having to consider complications such as the meaning of strain\footnote{Is it change in length divided by initial length or current length? This question is moot when there is negligible change in length.}
+  \item \Defn{Material nonlinearity} arises when the stress is not a linear function of strain, or possibly not even a function of strain at all! In this case, Hooke's law ($\sig=E\eps$) no longer applies, and we must go back to the strong form of the governing equations to remove all remnants of Hooke's law. In subsequent sections, we will assume that the material constituive model is a ``black box'' function $\sig(\eps)$ giving the stress as some unknown, generally nonlinear function of strain.
+\end{itemize}
+
+
+
+\subsection{Traditional FEM formulation of the nonlinear static bar problem}
+\label{sec:nonLinearBarFEM}
+As in the linear case, the approximate FEM solution for the displacement field is
+\begin{equation}
+  \aprx{u}(x)\definedEqual\sum\limits_{j=1}^{\numnodes}\aprx{u}_j \NBF_j(x)
+\label{eq:nonLinaprxuc}
+\end{equation}
+and the weight function is still expanded as it was in the linear case,
+\begin{equation}
+  w(x)\definedEqual\sum\limits_{i=1}^{\numnodes}w_i \NBF_i(x)
+\label{eq:nonLinweightc}
+\end{equation}
+
+In the nonlinear finite-element method, the nodal basis functions are still required to satisfy the properties listed in \eqn{eq:oneDRequirementsOnShapeFns}. The arrays $\NBFa(x)$, $\gradNBFa(x)$, $\Array{u}$, $\Array{w}$, and $\Array{\tractionForce}$ are defined the same as they were in the linear case. Accordingly, the array form of \eqn{eq:nonLinearBarWeakFormWithForces} becomes
+
+\begin{equation}
+ \int\limits_0^L \underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\gradNBFa(x)}_{\numnodes\by1} A(x) \sig(x) \dd x 
+= 
+\underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\Array{\tractionForce}}_{\numnodes\by1}}_{1\by1}
++  \int\limits_0^L \underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\NBFa(x)}_{\numnodes\by1}}_{1\by1}f(x)
+\dd x
+ \qquad\forall\Array{w}
+\label{eq:nonLinearBarWeakFormWithForces}
+\end{equation}
+where (recall) $\gradNBFa(x)$ denotes the array of shape function gradients.
+Since this must hold $\forall\Array{w}$, the premultiplication by $\Array{w}^T$ may be removed, giving
+\begin{equation}
+ \boxit{\Array{f}^\text{int} +  \Array{f}^\text{ext} = \Array{0}}
+\label{eq:nonLinearBarWeakFormWithForcesDiscr}
+\end{equation}
+%
+where
+\begin{equation}
+\boxit{\quad
+\text{\Defn{Internal force:}}\quad
+  \Array{f}^\text{int}\definedEqual -\int\limits_0^L \gradNBFa(x) A(x) \sig(x) \dd x
+\quad}
+\label{eq:nonlinearBarInternalForce}
+\end{equation}
+and
+\begin{equation}
+\boxit{\quad
+\text{\Defn{External force:}}\quad
+  \Array{f}^\text{ext}
+\definedEqual
+\Array{\tractionForce} +  \int\limits_0^L \NBFa(x)f(x)\dd x
+\quad}
+\label{eq:nonlinearBarExternalForce}
+\end{equation}
+These equations state that the sum of all forces must be zero. In particular, the forces applied by external agents (the distributed body force and the boundary forces) must be balanced exactly by the body's internal resistance to those forces.
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Nonlinear small-deformation static \oneD bar problem}
+For the \oneD bar problem with material nonlinearity, the governing equations are
+\begin{equation}
+\Bal
+  &\frac{\dd~~}{\dd x}\left[A(x) \sig(x)\right]+f(x)=0 \qquad  &          &\text{on domain $\Omega$ defined by }0<x<L& \\
+  &\sig(x)=\xi(\eps(x),x)                  && \text{subject to Robin BCs: } \\
+  &\eps(x)=\frac{\dd u(x)}{\dd x~~~}         &&\alpha_0 \tractionForce(0)+\beta_0 u(0)=\gamma_0 \\
+&\text{ }                                                  &&\alpha_L \tractionForce(L)+\beta_L u(L)=\gamma_L 
+\Eal
+\label{eq:nonLinearBarStrongForm}
+\end{equation}
+Here, $\xi(\eps,x)$ is a ``blackbox'' nonlinear elastic constitutive model giving stress from strain $\eps$. The explicit presence of $x$ allows material heterogeneity (such as material properties varying from point to point along the bar).  You, in your role as an MPM code developer, must treat the $\xi(\eps,x)$ function Note that the linear bar problem in the previous section is recovered by choosing $\xi(\eps,x)=E(x)\eps$.
+
+In the Robin boundary conditions, 
+\begin{equation}
+  \tractionForce(0)\definedEqual -A(0)\sig(0)
+\qquad\text{and}\qquad
+  \tractionForce(L)\definedEqual  A(L)\sig(0)
+\label{eq:nonLinboundaryForces}
+\end{equation}
+As in the previous linear bar analysis, these forces are defined to be positive when pointing to the right, in the direction of increasing $x$, while positive stresses correspond to tension (thus accounting for the negative in the first force definition, since a tensile force on the left end of the bar would point to the left). 
+All other variables in these equations are defined as they were in \eqn{eq:LinearBarStrongForm}. In what follows, we progress through the same sort of analysis steps as in the linear case, making appropriate adjustments for material nonlinearity.
+
+
+The strong form of the governing equation in \eqn{eq:nonLinearBarStrongForm} is multiplied by an arbitrary weight function  $w(x)$, and then integrated over the domain from $x=0$ to $x=L$:
+\begin{equation}
+  \int\limits_0^L \frac{\dd~~}{\dd x}\left[A(x) \sig(x)\right] w(x)\dd x  +  \int\limits_0^L f(x)w(x)\dd x=0
+\qquad\forall w(x)
+\end{equation}
+The first term is integrated by parts to give the so-called \Defn{weak form} of the governing equation:
+\begin{equation}
+  w(x) A(x) \sig(x) \big|_0^L-\int\limits_0^L w'(x) A(x) \sig(x)\dd x  +  \int\limits_0^L w(x)f(x)\dd x=0
+\qquad\forall w(x)
+\label{eq:nonLinearBarWeakForm}
+\end{equation}
+Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this may be written
+\begin{equation}
+ \int\limits_0^L w'(x)A(x) \sig(x) \dd x = w(0)\tractionForce(0)+w(L)\tractionForce(L)  +  \int\limits_0^L w(x)f(x)\dd x=0
+\label{eq:nonLinearBarWeakFormWithForcesc}
+\end{equation}
+
+
+
+
+\subsection{Traditional FEM formulation of the nonlinear bar problem}
+\label{sec:nonLinearBarFEM}
+As in the linear case, the approximate FEM solution for the displacement field is
+\begin{equation}
+  \aprx{u}(x)\definedEqual\sum\limits_{j=1}^{\numnodes}\aprx{u}_j \NBF_j(x)
+\label{eq:nonLinaprxuc}
+\end{equation}
+and the weight function is still expanded as it was in the linear case,
+\begin{equation}
+  w(x)\definedEqual\sum\limits_{i=1}^{\numnodes}w_i \NBF_i(x)
+\label{eq:nonLinweightc}
+\end{equation}
+
+In the nonlinear finite-element method, the nodal basis functions are still required to satisfy the properties listed in \eqn{eq:oneDRequirementsOnShapeFns}. The arrays $\NBFa(x)$, $\gradNBFa(x)$, $\Array{u}$, $\Array{w}$, and $\Array{\tractionForce}$ are defined the same as they were in the linear case. Accordingly, the array form of \eqn{eq:nonLinearBarWeakFormWithForces} becomes
+
+\begin{equation}
+ \int\limits_0^L \underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\gradNBFa(x)}_{\numnodes\by1} A(x) \sig(x) \dd x 
+= 
+\underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\Array{\tractionForce}}_{\numnodes\by1}}_{1\by1}
++  \int\limits_0^L \underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\NBFa(x)}_{\numnodes\by1}}_{1\by1}f(x)
+\dd x
+ \qquad\forall\Array{w}
+\label{eq:nonLinearBarWeakFormWithForces}
+\end{equation}
+where (recall) $\gradNBFa(x)$ denotes the array of shape function gradients.
+Since this must hold $\forall\Array{w}$, the premultiplication by $\Array{w}^T$ may be removed, giving
+\begin{equation}
+ \boxit{\Array{f}^\text{int} +  \Array{f}^\text{ext} = \Array{0}}
+\label{eq:nonLinearBarWeakFormWithForcesDiscr}
+\end{equation}
+%
+where
+\begin{equation}
+\boxit{\quad
+\text{\Defn{Internal force:}}\quad
+  \Array{f}^\text{int}\definedEqual -\int\limits_0^L \gradNBFa(x) A(x) \sig(x) \dd x
+\quad}
+\label{eq:nonlinearBarInternalForce}
+\end{equation}
+and
+\begin{equation}
+\boxit{\quad
+\text{\Defn{External force:}}\quad
+  \Array{f}^\text{ext}
+\definedEqual
+\Array{\tractionForce} +  \int\limits_0^L \NBFa(x)f(x)\dd x
+\quad}
+\label{eq:nonlinearBarExternalForce}
+\end{equation}
+These equations state that the sum of all forces must be zero. In particular, the forces applied by external agents (the distributed body force and the boundary forces) must be balanced exactly by the body's internal resistance to those forces.
+
+
+
+\subsubsection{Counting unknowns and equations to confirm solvability}
+The internal force involves an unknown stress field, $\sig(x)$. Therefore, all components of the internal force array are unknowns.  These internal forces would become known if the values of their integrands were known at Gauss points. Thus, stresses at Gauss points become part of the list of unknowns. Stresses at Gauss points may be found from strain at Gauss points via the constitutive law, making strain at Gauss  points added to the list of unknowns. Strain at Gauss points are defined to equal the displacement gradient at the Gauss points, which is found if we know the nodal displacements. Thus nodal displacements must be added to the list of unknowns.  As was the case in the linear problem, the boundary forces, $\tractionForce(0)$ and $\tractionForce(L)$, are unknown. 
+
+Overall, the counting of equations and unknowns for the nonlinear bar problem is summarized as follows.
+{\samepage{
+\begin{itemize}
+  \item NUMBER OF EQUATIONS: $2\numnodes+2+2\numgaussTotal$
+       \begin{enumerate}[(a)]
+       \item \numnodes linear equations from force balance: $\Array{f}^\text{int}+\Array{f}^\text{ext}=\Array{0}$
+       \item \numnodes linear equations from Gauss evaluation of the $\Array{f}^\text{int}$ integrals as linear combinations of the stresses at Gauss points.
+       \item 2 linear equations from boundary conditions: $\alpha_0 \tractionForce(0)+\beta_0 u_1=\gamma_0$ and $\alpha_L \tractionForce(L)+\beta_L u_\numnodes=\gamma_L$
+       \item \numgaussTotal nonlinear equations from stresses at Gauss points determined from the strains at the Gauss points, via the the constitutive (material) model: $\sig(x_g)=\xi(\eps_g,x_g)$ where subscript $g$ ranges over the number of Gauss points and $x_g$ refers to the location of the $g^\text{th}$ Gauss point. 
+       \item \numgaussTotal linear equations from the definition of strain at a Gauss point: $\eps(x_g)=u'(x_g)=\Array{u}^T \gradNBFa(x_g)$
+       \end{enumerate}
+  \item NUMBER OF UNKNOWNS: $2\numnodes+2+2\numgaussTotal$
+       \begin{enumerate}[(a)]
+       \item \numnodes Internal forces: $f_1^\text{int}, \ldots, f_\numnodes^\text{int}$
+       \item 2 Boundary forces: $\tractionForce(0), \tractionForce(L)$
+       \item \numgaussTotal stresses at Gauss points: $\sig_1,\ldots,\sig_\numgaussTotal$
+       \item \numgaussTotal strains at Gauss points: $\eps_1,\ldots,\eps_\numgaussTotal$
+       \item \numnodes nodal displacements: $u_1,\ldots,u_\numnodes$
+       \end{enumerate}
+\end{itemize}
+}}
+The count of equations equals the count of unknowns, making a solution potentially possible. In this list, the only nonlinear set of equations comes from the constitutive model, but nonlinearity anywhere requires the governing system of equations to be solved iteratively, which is the subject of a numerical analysis class. Our goal of demonstrating solvability is accomplished.
+%  Referring to the original problem statement in \eqn{eq:nonLinearBarStrongForm}, 
+%we know that the stress $\sig(x)$ at any given location is found by evaluating the strain at that location and then calling the constitutive model. Since the strain is defined $\eps\definedEqual u'(x)$, 
+%it follows that the strains at Gauss points are functions of the The strain is found from the gradient of the displacement field. \{u_1,u_2,\ldots,u_\numnodes\}$.
+%Together, \eqs{eq:nonLinearBarWeakFormDiscr}{eq:nonLinearBarStrongFormBCs} form a set of $\numnodes+2$ equations solvable for the $\numnodes+2$ unknowns!  Specific methods of solution, covered in a first course on the finite-element method, are not discussed in this \manuscript.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
