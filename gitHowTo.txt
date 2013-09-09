@@ -90,6 +90,8 @@ $ git commit --amend
 You'll see the same vi text-editing environment come up, but it already has your old message in there.  You can modify it or leave it there.  save and quit again, by pressing esc, then typing :wq and then it'll commit it, but if you look at the "git log" you'll see the number of commits hasn't changed.
 
 (4) Pushing our changes up to the remote server repository:
+If you have changes that you are not yet ready to commit, 
+first execute `git stash`
 
 $ git push
 Username for 'https://github.com': <username>
@@ -99,6 +101,8 @@ To https://github.com/schmidticus/brannon-mpm-primer.git
 
 Note:  the owner of the repository must give you permission before you will be able to push to the repository.
 
+If you executed `git stash` previously, then now type `git pop`
+
 (5) Pulling other people's changes down from the remote server:
 
 $ git pull --rebase
@@ -106,4 +110,5 @@ $ git pull --rebase
 Note that you can only do this if everything is already committed and unmodified in your repository.
 
 (6) Rectifying merge conflicts:
+If the conflict is about a generated binary file (like a pdf output from LaTeX), then just delete the file and replace it with the newly generated one.
 (TODO)

@@ -31,13 +31,15 @@ The negative in the first equation is present because a positive $u'(0)$ corresp
 %
 
 
-To work towards an MPM solution to this problem, this section is broken into four subsections. First, the governing equation is recast as an integral equation to lessen the differentiability requirements of approximate solutions. Next, the traditional FEM solution is provided, after which it is converted to an MPM formulation through only minor adjustments. Our discussion of this elementary problem is finished with a step-by-step MPM algorithm.  Subsequent sections will slowly build up from this simple \oneD bar problem to allow transients (such as acoustic waves) in the linear-elastic case, material nonlinearity in the absence of transients, and then both material nonlinearity and transient waves. Complications of geometric nonlinearity (\ie large stretching of the material) are not discussed in the \oneD case studies; large-deformation is instead delayed until we generalize the small-strain concepts to \twoD and \threeD problems.
+To work systematically towards an MPM solution to this problem, this section will first relax differentiability requirements of approximate solutions by recasting the governing differential equation as an integral equation. Next, the traditional FEM solution is provided, after which it is converted to an MPM formulation through only minor adjustments. Our discussion of this elementary problem is finished with a step-by-step MPM algorithm.  Subsequent sections will slowly build up from this simple \oneD bar problem to allow transients (such as acoustic waves) in the linear-elastic case, material nonlinearity in the absence of transients, and then both material nonlinearity and transient waves. Complications of geometric nonlinearity (\ie large stretching of the material) are not discussed in the \oneD case studies; large-deformation is instead delayed until we generalize the small-strain concepts to \twoD and \threeD problems.
 
 
-\subsection{The weak form of the governing equation}
+\subsection{Converting the strong (differential) form of the governing equation to the weak (integral) form}
 {\samepage{
-The ODE in \eqn{eq:LinearBarStrongForm} is called the \Defn{strong form} of the governing equation, which requires the displacement function \footnote{The  displacement function is often called called the \Defn{trial function}, which is an abstract term that reminds us that this same ODE applies to many more physical applications than just motion of an elastic bar.} $u(x)$ to have no jumps in slope (no cusps) in order to be twice differentiable.  This section recasts the governing equation as an integral, which lessens the continuity requirements on solutions. To obtain the integral formulation, the strong form is first multiplied by an arbitrary weight function\footnote{In variational formulations, the function $w(x)$ is called the \Defn{test function}, and it is interpreted physically as a small perturbation of the displacement, often denoted $\delta u(x)$.  Variational formulations of the finite-element method often state that the test function $w(x)$ is required to vanish on the parts of the boundary where the trial function $u$ is specified, but this restriction is NOT actually needed unless you are seeking a formula for the so-called energy potential to be minimized.  Not only does an energy potential not always exist (it does for this problem), but it isn't needed to obtain the finite-element solution. We therefore place no restrictions whatsoever on the test function $w(x)$ at places where displacement is prescribed.} $w(x)$, and then integrated over the domain from $x=0$ to $x=L$:
+The ODE in \eqn{eq:LinearBarStrongForm} is called the \Defn{strong form} of the governing equation, which requires the displacement function\footnote{The  displacement function is often called called the \Defn{trial function}, which is an abstract term that reminds us that this same ODE applies to many more physical applications than just motion of an elastic bar.} $u(x)$ to have no jumps in slope (no cusps) in order to be twice differentiable.  This section recasts the governing equation as an integral, which lessens the continuity requirements. 
 }}
+To obtain the integral formulation, the strong form is first multiplied by an arbitrary weight function\footnote{In variational formulations, the function $w(x)$ is called the \Defn{test function}, and it is interpreted physically as a small perturbation of the displacement, often denoted $\delta u(x)$.  Variational formulations of the finite-element method often state that the test function $w(x)$ is required to vanish on the parts of the boundary where the trial function $u$ is specified, but this restriction is NOT actually needed unless you are seeking a formula for the so-called energy potential to be minimized.  Not only does an energy potential not always exist (it does for this problem), but it isn't needed to obtain the finite-element solution. We therefore place no restrictions whatsoever on the test function $w(x)$ at places where displacement is prescribed.} $w(x)$, and then integrated over the domain from $x=0$ to $x=L$:
+
 \begin{equation}
   \int\limits_0^L w(x) \frac{\dd~~}{\dd x}\left[E(x)A(x) \frac{\dd u(x)}{\dd x~~~}\right]\dd x  +  \int\limits_0^L w(x)f(x)\dd x=0
 \qquad\forall w(x)
@@ -48,7 +50,7 @@ The first term is integrated by parts\footnote{Namely, $\int_0^L u \Derivdd{v}{x
 \qquad\forall w(x)
 \label{eq:LinearBarWeakForm}
 \end{equation}
-Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this may be written
+where the prime is a standard shorthand notation for differentiation with respect to $x$. Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this may be written
 \begin{equation}
 \overset{\text{\Defn{WEAK FORM OF THE BAR PROBLEM}\hspace{8cm}}}{\boxit{\quad
  \int\limits_0^L E(x)A(x) w'(x)u'(x)\dd x = w(0)\tractionForce(0)+w(L)\tractionForce(L)  +  \int\limits_0^L w(x)f(x)\dd x
@@ -56,7 +58,7 @@ Using the definition of boundary forces defined in \eqn{eq:boundaryForces}, this
 \quad}}
 \label{eq:LinearBarWeakFormWithForcesc}
 \end{equation}
-This is called the ``weak'' form of the governing equation because the trial function, displacement $u(x)$, now has only one derivative on it. This will allow us to seek approximate solutions that are merely continuous rather than needing to find functions that have continuous slopes.
+This is called the ``weak'' form of the governing equation because the trial function, displacement $u(x)$, now has only one derivative on it. This lets us to seek approximate solutions that are merely continuous rather than needing to find functions with continuous slopes.
 
 
 
@@ -76,6 +78,7 @@ The weight function in the weak formulation is similarly expanded as
   w(x)\definedEqual\sum\limits_{i=1}^{\numnodes}w_i \NBF_i(x)
 \label{eq:weightc}
 \end{equation}
+%
 
 In the finite-element method, the nodal basis functions are required to satisfy the following properties:
 
@@ -110,7 +113,7 @@ As explained in any good introductory FEM textbook, the last condition imposes t
 
 \renewcommand{\gradNBFa}{\Array{G}}
 Let $\NBFa(x)$ denote a 
-$\numnodes\by1$ column array of the nodal basis functions, and let $\gradNBFa$ be the array of gradients of the these functions. Similarly, 
+$\numnodes\by1$ column array of the nodal basis functions, and let $\gradNBFa$ be the array of gradients of these functions. Similarly, 
 let $\Array{u}$ and $\Array{w}$ be \numnodes\by1 column arrays of nodal displacements and weights:
 \begin{equation}
   \NBFa(x)\definedEqual\begin{bmatrix}\NBF_1(x)\\ \NBF_2(x) \\ \vdots \\ \NBF_\numnodes(x)\end{bmatrix}
@@ -123,13 +126,30 @@ let $\Array{u}$ and $\Array{w}$ be \numnodes\by1 column arrays of nodal displace
 \end{equation}
 Then \eqs{eq:aprxuc}{eq:weightc} may be written in matrix form as\footnote{Commutativity of scalar multiplication allows us to put the nodal basis array either on the left (with a transpose) or on the right (without transpose) as done here. In anticipation of upcoming parts of the analysis, we find it convenient to have the displacement array placed on the right with the weight array on the left.}
 \begin{equation}
-  \aprx{u}(x)=\underbrace{
+%  \boxit{
+\aprx{u}(x)=\underbrace{
 \underbrace{\NBFa^T(x)}_{1\by\numnodes} \underbrace{\Array{u}}_{\numnodes\by1}}_{1\by1}
+%}
 \qquad\text{and}\qquad
-  w(x)=\underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\NBFa(x)}_{\numnodes\by1}}_{1\by1}
+% \boxit{
+ w(x)=\underbrace{\underbrace{\Array{w}^T}_{1\by\numnodes}\underbrace{\NBFa(x)}_{\numnodes\by1}}_{1\by1}
+%}
 \label{eq:uandwstatic}
 \end{equation}
-The superscript ``T'' denotes the transpose, which transforms a column array, reversing the matrix dimensions as indicated.  The final result is a 1\by1 matrix, which is simply a single number.  Let's also define a ``reaction array'' $\Array{\tractionForce}=\NBFa(0)\tractionForce(0)+\NBFa(L)\tractionForce(L)$. When the Kronecker property, \eqn{eq:oneDRequirementsOnShapeFnsKronecker}, is imposed, this array is zero in all but the first and last componentsas follows:
+The superscript ``T'' denotes the transpose, which converts a column array to a row array, reversing the matrix dimensions as indicated.  The final result is a 1\by1 matrix, which is simply a single number.  Evaluating the above expression for $w(x)$ at the endpoints of the bar, note that the boundary term in the weak form may be written
+\begin{equation}
+w(0)\tractionForce(0)+w(L)\tractionForce(L)
+=\Array{w}^T\NBFa(0)\tractionForce(0)
++\Array{w}^T\NBFa(L)\tractionForce(L)
+\end{equation}
+This result motivates defining a so-called \Defn{reaction array}, $\Array{\tractionForce}$, to be the coefficent of $\Array{w}^T$:
+\begin{equation}
+  \Array{\tractionForce}=\NBFa(0)\tractionForce(0) +\NBFa(L)\tractionForce(L)
+\qquad\implies\qquad
+w(0)\tractionForce(0)+w(0)\tractionForce(L)=\Array{w}^T\Array{\tractionForce}
+\label{eq:ReactionArray}
+\end{equation} 
+When the Kronecker property in \eqn{eq:oneDRequirementsOnShapeFnsKronecker} is imposed, the reaction array is zero in all but its first and last components as follows:
 \begin{equation}
   \Array{\tractionForce}\definedEqual
 \begin{bmatrix}
@@ -141,10 +161,8 @@ The superscript ``T'' denotes the transpose, which transforms a column array, re
 0 \\
 \tractionForce(L)
 \end{bmatrix}
-\qquad\text{which allows writing }\qquad
-w(0)\tractionForce(0)+w(L)\tractionForce(L)=\Array{w}^T\Array{\tractionForce}
 \end{equation}
-Substituting the above two equations into \eqn{eq:LinearBarWeakFormWithForcesc} gives
+Substituting \eqs{eq:uandwstatic}{eq:ReactionArray} into \eqn{eq:LinearBarWeakFormWithForcesc} gives
 \begin{equation}
  \int\limits_0^L E(x)A(x) 
 \underbrace{
@@ -170,12 +188,14 @@ Substituting the above two equations into \eqn{eq:LinearBarWeakFormWithForcesc} 
 \label{eq:LinearBarWeakFormWithForces}
 \end{equation}
 where (recall) the array $\gradNBFa(x)$ contains the shape function gradients.
-Since this must hold $\forall\Array{w}$, the premultiplication by $\Array{w}^T$ may be removed. Also, recognizing that $\Array{u}$ does not vary with $x$, it may be moved outside of the first integral, giving
+Because this must hold $\forall\Array{w}$, the premultiplication by $\Array{w}^T$ may be removed. Also, recognizing that $\Array{u}$ does not vary with $x$, it may be moved outside of the first integral, giving
 \begin{equation}
+\boxit{\quad
 \AArray{K}\Array{u}
 =
 \Array{\tractionForce}  
 +  \Array{f}
+\quad}
 \label{eq:LinearBarWeakFormDiscr}
 \end{equation}
 where
@@ -198,22 +218,28 @@ and
 \end{equation}
 
 \subsubsection{Counting unknowns and equations to confirm solvability}
-\Equation{eq:LinearBarWeakFormDiscr} represents a set of \numnodes equations involving $\numnodes+2$ unknowns: 
+\Equation{eq:LinearBarWeakFormDiscr} represents a set of \numnodes equations involving\ldots
 \begin{equation}
  \text{\Defn{A total of $\numnodes+2$ unknowns}:}\qquad u_1, u_2, \ldots, u_\numnodes,\quad \tractionForce(0), \tractionForce(L)
 \end{equation}
-Not only are the nodal displacements unknown, so are the boundary forces, $\tractionForce(0)$ and $\tractionForce(L)$, within $\Array{\tractionForce}$.  To achieve a solvable system, \eqn{eq:LinearBarWeakFormDiscr} must be supplemented with the two boundary conditions in \eqn{eq:LinearBarStrongForm}.  Specifically, again using the Kronecker property to assert that $u(0)=u_1$ and $u(L)=u_\numnodes$,
+Not only are the nodal displacements unknown, so are the boundary forces, $\tractionForce(0)$ and $\tractionForce(L)$, each hidden within $\Array{\tractionForce}$.  To achieve a solvable system, \eqn{eq:LinearBarWeakFormDiscr} must be supplemented with the two boundary conditions in \eqn{eq:LinearBarStrongForm}.  Specifically, again using the Kronecker property to assert that $u(0)=u_1$ and $u(L)=u_\numnodes$,
 \begin{equation}
 \Bal
-\alpha_0 \tractionForce(0)+\beta_0 u_1&=\gamma_0 \\
-\alpha_L \tractionForce(L)+\beta_L u_\numnodes&=\gamma_L 
+\alpha_0 \tractionForce(0)+\beta_0 u(0)&=\gamma_0
+   \quad\text{where}\quad
+   u(0)=\NBFa^T(0)\Array{u}=u_1
+\\
+\alpha_L \tractionForce(L)+\beta_L u(L)&=\gamma_L 
+   \quad\text{where}\quad
+   u(L)=\NBFa^T(L)\Array{u}=u_\numnodes
 \Eal
 \label{eq:LinearBarStrongFormBCs}
 \end{equation}
+Note that, for the finite element method, $u(0)$ and $u(L)$ are simply the displacements at the first and last nodes\footnote{This follows because FEM nodes always exist at the boundary and because (by the Kronecker property) only one nodal basis function is nonzero at that location, which will not generally be true for the material point method.}
 Together, \eqs{eq:LinearBarWeakFormDiscr}{eq:LinearBarStrongFormBCs} form a  linear system of $\numnodes+2$ equations solvable for the $\numnodes+2$ unknowns!  Specific methods of solution, covered in an elementary FEM course, are not discussed in this \manuscript.
 
 \subsubsection{FEM integral evaluation}
-In the finite-element method, a significant computational expense goes into evaluating the integrals in \eqs{eq:linearBarGlobalStiffness}{eq:linearBarBodyForceArray}.  Since two different integrals (stiffness and force) must be evaluated, let's discuss them generically by letting $\zeta(x)$ denote the integrand. Then the task is to evaluate 
+In the finite-element method, a significant computational expense goes into evaluating the integrals in \eqs{eq:linearBarGlobalStiffness}{eq:linearBarBodyForceArray}.  Noting that two different integrals (stiffness and force) must be evaluated, let's discuss them generically by letting $\zeta(x)$ denote the integrand. Then the task is to evaluate 
 \begin{equation}
   \int\limits_\Omega \zeta(x) \dd x
 \qquad\text{where}\quad
@@ -233,7 +259,7 @@ where $\Omega_e$ represents the $\eeth$ element domain, and \numelements is the 
   \int\limits_\Omega \zeta(x) \dd x = \sum\limits_{e=1}^{\numelements}\int\limits_{\Omega_e} \zeta(x) \dd x \approx \sum\limits_{e=1}^{\numelements}\sum\limits_{g=1}^{\numgaussOnElemente} \zeta(x_{ge}) \omega_{ge} \dd x
 \label{eq:oneDFEMstyleIntegration}
 \end{equation}
-where \numgaussOnElemente denotes the number of gauss points used on the \eeth element, $x_{ge}$ is the location of the \gth Gauss point on the \eeth element, and $\omega_{ge}$ is the associated Gauss weight factor.  As seen, this method of evaluating the FEM integrals requires function evaluations at a finite number of locations (the Gauss points). Consequently, the FEM code user does not have to write computer software functions for the problem's material, structural, and loading functions.\footnote{Namely, the spatially varying stiffness $E(x)$, area $A(x)$, and body force $f(x)$.} Instead, the FEM code user only needs to supply arrays containing values of these functions at the Gauss points!  
+where \numgaussOnElemente denotes the number of Gauss points used on the \eeth element, $x_{ge}$ is the location of the \gth Gauss point on the \eeth element, and $\omega_{ge}$ is the associated Gauss weight factor.  As seen, this method of evaluating the FEM integrals requires function evaluations at a finite number of locations (the Gauss points). Consequently, the FEM code user does not have to write computer software functions for the problem's material, structural, and loading functions.\footnote{Namely, the spatially varying stiffness $E(x)$, area $A(x)$, and body force $f(x)$.} Instead, the FEM code user only needs to supply arrays containing values of these functions at the Gauss points!  
 
 Once the FEM integrals have been evaluated, the remainder of the problem is to solve the linear system for the $\numnodes+2$ unknowns, as previously described. We are now in a position to convert the formulation to become an MPM method, where the same FEM integrals must be evaluated except that problem data are no longer saved at Gauss points.
 
@@ -270,7 +296,7 @@ In the previously discussed traditional FEM formulation, all problem data\footno
 %
 %
 
-One difficulty in describing MPM formulations is the notational headaches of distinguishing between numerous countable entities. As in the FEM formulation, we still have a countable number of nodes on the grid. In the MPM, we also have a countable number of material points whose locations must be distinguished from grid node locations. Sometimes, we even need to the left and right endpoints of a particle's domain (ends of the pillbox shapes in the figure). To alleviate some notational clutter in MPM discussions, it is fairly common (\cf \cite{Bardenhagen2004}) for MPM formulations to adopt the convention that the letter of the alphabet used in indices (subscripts) defines the intended meaning as follows:
+One difficulty in describing MPM formulations is the notational headaches of distinguishing between numerous countable entities. As in the FEM formulation, we still have a countable number of nodes on the grid. In the MPM, we also have a countable number of material points whose locations must be distinguished from grid node locations. Sometimes, we even need to refer to the left and right endpoints of a particle's domain (ends of the pillbox shapes in the figure). To alleviate some notational clutter in MPM discussions, it is fairly common (\cf \cite{Bardenhagen2004}) for MPM formulations to adopt the convention that the letter of the alphabet used in indices (subscripts) defines the intended meaning as follows:
 \begin{itemize}
   \item Index $i$ stands for a grid node, and $\sum_i$ refers to a sum over all grid nodes. For example, $x_i$ refers to the location of the \ith grid node.
   \item Index $p$ stands for an MPM particle, and $\sum_p$ refers to a sum over all MPM particles.  For example, $x_p$ refers to the location of the \pth particle. This convention supercedes the double subscripting notation used in \fig{fig:particlesOnOneDgrid}.\footnote{The double-subscripting can always be reinstated (as needed) to refer to particular particles. For example, the location of the $29^\text{th}$ particle would be denoted $x_{p_{29}}$ in order to distinguish it from the $29^\text{th}$ grid node location, which would be denoted $x_{i_{29}}$}
@@ -290,7 +316,7 @@ Once nodal displacements are found on the grid, they are simply mapped to the pa
 \begin{equation}
  \boxit{\quad u_p=\sum_i \NBFip u_i \quad}
 \end{equation}
-where (recall) $\NBFip$ is the average of the \ith nodal basis function over the \pth particle. \AuthorNote{SS: using the above equation is, I think, of paramount importance when using the CPDI method, discussed later in this tutorial.  We should carefully watch out if Uintah mappings are doing this correctly in that case.  I don't know if Uintah was written intelligently enough to have mapping from grid to particle be a callable function -- if so, then there is less chance of having it screwed up somewhere.}
+where $\NBFip$ is the average of the \ith nodal basis function over the \pth particle, discused in detail below. \AuthorNote{SS: using the above equation is, I think, of paramount importance when using the CPDI method, discussed later in this tutorial.  We should carefully watch out if Uintah mappings are doing this correctly in that case.  I don't know if Uintah was written intelligently enough to have mapping from grid to particle be a callable function -- if so, then there is less chance of having it screwed up somewhere.}
 
 %
 \begin{figure}[h]
@@ -432,17 +458,66 @@ and
 \quad}}
 \label{eq:LinearBarForceIntegral}
 \end{equation}
+
+
+
+
 In these forms, the remaining integrals involve only the nodal basis functions or their gradients, hence allowing these integrals to be evaluated exactly over each particle domain, thereby significantly increasing the accuracy of the result in comparison to the single-point method.
 
-\subsection{Exotic idea: make the integrals easier by changing the basis}
-Above, the FEM integrals reduced to needing to find exact solutions for 
+\subsection{Exotic idea: change the grid's nodal basis functions}
+Exactly evaluating the remaining integrals in \eqs{eq:LinearBarStiffnessIntegral}{eq:LinearBarForceIntegral} isn't horribly difficult in \oneD, but it is impractical to evaluate them in \twoD and \threeD.  Nothing in our preceding formulation of the discretized governing equations required the nodal basis functions to satisfy \eqn{eq:oneDRequirementsOnShapeFnsKronecker} or \eqn{eq:oneDRequirementsOnShapeFnsFEMsupport}. Convergence is ensured by retaining the properties of partition of unity,  linear completeness, and continuity, but we do not need the Kronecker property or FEM-style compactness. Accordingly, we now consider the following minor revisions of the above choices for the generalized average:
+\begin{subequations}
+\begin{align}
+  \Omega_p^\alt &\ne \Omega_p\quad\text{(That is, the domains aren't \emph{required} to coincide.)}
+\\
+ \text{For the stiffness integral, }  \zeta_p^\alt(x)&=E(x_p)A(x_p)V_p \frac{\gradNBFa^\alt(x)\gradNBFa^{\alt T}(x)}{V_p^\alt}
+\\
+ \text{For the force integral, }  \zeta_p^\alt(x)&=f(x_p)V_p \frac{\NBFa^\alt(x)}{V_p^\alt}
+\\
+  \gimpW^\alt(x) &=T_p^\alt(x)\definedEqual\begin{cases}1 & \text{for }x\in\Omega_p^\alt \\
+                                0 & \text{for }x\notin\Omega_p^\alt
+                   \end{cases}
+\end{align}
+\label{eq:CPDIChoices}
+\end{subequations}
+The only changes in this list are
+\begin{itemize}
+  \item $\NBFa(x)$ has been replaced with $\NBFa^\alt(x)$, which is a \emph{non-FEM} nodal basis in the sense that it satisfies all of the attributes in \eqn{eq:oneDRequirementsOnShapeFns} except the Kronecker property and FEM-style compact support.
+  \item $\gradNBFa(x)$ has been likewise replaced with $\gradNBFa^\alt(x)$, which is the array containing gradients of $\NBFa^\alt(x)$.
+  \item The MPM particle integration domain  $\Omega_p^\alt$ might not coincide with the domain $\Omega_p$ that is actually occupied by the particle. Whereas the $\Omega_p$ domains are required to form a tesslation of the physical domain (covering it without gaps or overlaps), no such requirement is placed on these $\Omega_p^\alt$ domains.
+\end{itemize} 
+
+The resulting formulas for the approximate stiffness and force are identical in form to those listed in the previous section, but we now write them in terms of particle-domain averages as follows:
 \begin{equation}
-\int\limits_{\Omega_p} \gradNBFa(x)\gradNBFa^T(x) \dd x
-\qquad\text{and}\qquad
-\int\limits_{\Omega_p} \NBFa(x) \dd x
-\label{eq:LinearBarBasisIntegrals}
+\boxit{\quad
+  \AArray{K}
+\approx
+  \sum\limits_p \kappa_p \GGa_p^\alt
+\quad}
+\quad\text{where}\quad 
+\kappa_p\definedEqual E(x_p)A(x_p)V_p
+\quad\text{and}\quad
+\GGa_p^\alt \definedEqual \frac{1}{V_p^\alt}\int\limits_{\Omega_p^\alt} \gradNBFa^\alt(x)\gradNBFa^{\alt T}(x) \dd x
+\label{eq:altLinearBarStiffnessIntegral}
 \end{equation}
-Exactly evaluating these integrals isn't horribly difficult in \oneD, but getting exact solutions to the analogous integrals is impractical in \twoD and \threeD, at least when all of the properties in  \eqn{eq:oneDRequirementsOnShapeFns} are assumed to hold. However, nothing in our preceding analysis required \eqn{eq:oneDRequirementsOnShapeFnsKronecker} or \eqn{eq:oneDRequirementsOnShapeFnsFEMsupport}. Convergence is ensured by retaining the properties of partition of unity,  linear completeness, and continuity, but we do not need the Kronecker property or FEM-style compactness. The alternative continuously adaptive grid basis in \fig{fig:CPDI_shape_functions} is linearly complete, and it can be shown to significantly increase convergence rates \cite{Sadeghirad2011}.  Moreover, although this alternative basis might seem to be more complicated than ordinary tent functions when viewed from the global perspective, these CPDI functions are \emph{much} simpler (straight lines) when viewed on any given particle domain. Thus, each integral over a particle is much simpler!  Over any given particle the alternative basis, which we denote $\NBF^\alt(x)$ is simply a linear interpolation of the regular tent-function basis $\NBF(x)$ evaluated at the particle corners (\ie at the particle endpoints).\footnote{This interpolation of the regular FEM-style nodal basis generalizes seemlessly to \twoD and \threeD analysis.}  Thus, in a loop over particles, the integrals in \eqn{eq:LinearBarBasisIntegrals} become trivial to evaluate!  Not only is the computational effort reduced when using $\NBF^\alt(x)$, these choices also automatically avoid the cell-straddling error, and they ensure that neighboring particles will interact with each other even when they are separated by an arbitrary number of grid cells, thus allowing coarse particle distributions in regions of little interest.
+and
+\begin{equation}
+\boxit{\quad
+  \Array{f}
+\approx
+  \sum\limits_p f(x_p)V_p \NBFavgOverpa_p
+\quad}
+\quad\text{where}\quad 
+\NBFavgOverpa_p^\alt\definedEqual\frac{1}{V_p^\alt}\int\limits_{\Omega_p^\alt} \NBFa^\alt(x) \dd x
+\label{eq:altLinearBarForceIntegral}
+\end{equation}
+%
+We define the \Defn{particle-grid mapping matrix}, with components denoted $\NBFip$, to be the average of the \ith nodal basis function $\NBF_i^\alt(x)$ over the $\pth$ particle domain $\Omega_p^\alt$.  This matrix plays a pivotal role in mapping data from particles to grid or vice-versa.  We therefore wish to select nodal basis functions $\NBFa^\alt$ that make evaluation of $\NBFip$ both algorithmically simple (for problems of any dimension) and accurate.  This need is satisfied by the alternative continuously adaptive grid basis depicted in \fig{fig:CPDI_shape_functions}. 
+
+The alternative basis in \fig{fig:CPDI_shape_functions} (shown as thick lines) couples the grid topology with the underlying topology of the particles so that particles that are stretched out relative to the grid will cause the overlaid grid basis to also be stretched out, thus ensuring that neighboring particles continue to affect each other even when the particle centroids are separated by an arbitary number of grid cells. In the figure, a standard FEM-style nodal basis (\eg the regular tent functions shown as triangles in that figure) is used to construct the alternative nodal basis.  Specifically, the alternative basis function $\NBF_i^\alt$ for the \ith grid node is found by linearly interpolating the standard FEM tent basis $\NBF_i$ to the particle corners (endpoints). As shown, both $\NBF_i$ and $\NBF_i^\alt$ exactly coincide at particle corners.  However, within a particle, $\NBF_i^\alt$ is a straight line, which makes the integrals over particle domains in \eqs{eq:altLinearBarStiffnessIntegral}{eq:altLinearBarForceIntegral} far easier to evaluate than they would be if regular FEM-style tent functions were to be used. Moreover, the alternative grid basis functions ensure stretch out their support domains as the underlying particles stretch out their lengths. This will have a very desirable effect of ensuring that neighboring particles continue to affect each other even when stretched accross an arbitrary number of grid cells. This is the first known mathematically rigorous way to allow an MPM formulation to accurately handle fractional particles per cell, and it provides an attractive alternative to grid mesh refinement -- regions of little interest may be discretized using particles that are large in size relative to the grid.
+
+
+linearly complete, and it can be shown to significantly increase convergence rates \cite{Sadeghirad2011}.  Moreover, although this alternative basis might seem to be more complicated than ordinary tent functions when viewed from the global perspective, these CPDI functions are \emph{much} simpler (straight lines) when viewed on any given particle domain. Thus, each integral over a particle is much simpler!  Over any given particle the alternative basis, which we denote $\NBF^\alt(x)$ is simply a linear interpolation of the regular tent-function basis $\NBF(x)$ evaluated at the particle corners (\ie at the particle endpoints).\footnote{This interpolation of the regular FEM-style nodal basis generalizes seemlessly to \twoD and \threeD analysis.}  Thus, in a loop over particles, the integrals in \eqn{eq:LinearBarBasisIntegrals} become trivial to evaluate!  Not only is the computational effort reduced when using $\NBF^\alt(x)$, these choices also automatically avoid the cell-straddling error, and they ensure that neighboring particles will interact with each other even when they are separated by an arbitrary number of grid cells, thus allowing coarse particle distributions in regions of little interest.
 
 \AuthorNote{SS: It is VERY important for you to understand the meaning and algorithmic simplicity of the CPDI basis -- make sure you understand it and can use it immediately in your programming exercises.}
 
