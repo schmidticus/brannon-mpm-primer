@@ -103,12 +103,50 @@ Note:  the owner of the repository must give you permission before you will be a
 
 If you executed `git stash` previously, then now type `git pop`
 
+
 (5) Pulling other people's changes down from the remote server:
 
 $ git pull --rebase
 
 Note that you can only do this if everything is already committed and unmodified in your repository.
 
+***IF YOU HAVE THINGS YOU ARE WORKING ON***
+1. Close all programs that have any of your documents open in them. (such as the .tex files or the pdf file)
+
+2. Make sure everything is NOT staged for commit.  You can check by writing "git status" and seeing if it says that anything is staged for commit.  If some things are staged for commit, you can unstage them by writing:
+$ git reset HEAD *
+
+3. Now, you can stash your changes.
+$ git stash
+
+4. Check with "git status" to make sure everything is going as plan.  It should say "working directory clean".
+
+5. Now, pull new changes from the server.
+$ git pull --rebase
+
+6. Now you can pop your old changes back off the "stash" stack.
+$ git stash pop
+
+7. There may be merge conflicts, where what you modified is slightly different than what was changed, in the same sections.  See below for an outline of how to deal with those.
+
+***IF YOU ALREADY COMMITTED***
+If you already committed some things and you want to pull changes that are on the server repository:
+When you pull --rebase, you might have some conflicts. If this is the case, then REMEMBER! you are not done.  You need to resolve the conflicts first, and then add them so the changes are "staged", and then do the "git rebase --continue" command.  After you do all that, THEN you will be finished.
+
+
+
 (6) Rectifying merge conflicts:
+
 If the conflict is about a generated binary file (like a pdf output from LaTeX), then just delete the file and replace it with the newly generated one.
-(TODO)
+
+Otherwise, if the conflict is in an ASCII text file, then the conflict will look something like this:
+
+<<<<<<< HEAD:mergetest
+This is one version of the line
+=======
+This is another version of the line
+>>>>>>> 4e2b407f501b68f8588aa645acafffa0224b9b78:mergetest
+
+Go in and delete the "<<<<<<", "=======" and ">>>>>>>" sections, and put the two lines together in the way you like, to form the correct combination.  Then save the file.  There may be more than one section like this in one file.
+
+NOTE: I've noticed that sometimes it doesn't put the "<<<<<<" on its own line.  Sometimes the line of stuff you want to keep is on the same line as the "<<<<<<".  So be careful about that.
