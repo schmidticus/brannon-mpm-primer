@@ -3,7 +3,9 @@
 \documentclass[english]{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
+\usepackage{amsbsy}
 \usepackage{amssymb}
+\usepackage{esint}
 \usepackage{babel}
 \begin{document}
 \begin{center}
@@ -55,12 +57,293 @@ The Navier-Stokes Equations:
 
 
 \[
+(etc.)
+\]
+
+
+\[
 \]
 
 
 In the Engineering world, one in particular is very commonly solved
-using this method, which is:
+using this method, which is: 
 
+~
+
+Static Stress/Strain Equation (where ``$u$'' represents displacement):
+
+\[
+\frac{\partial}{\partial x}\left(AE\frac{\partial u}{\partial x}\right)+f(x)=0
+\]
+Dynamic Stress/Strain Equation:
+
+\[
+\frac{\partial}{\partial x}\left(AE\frac{\partial u(x,t)}{\partial x}\right)+f(x)=\rho(x)A(x)\frac{\partial^{2}u}{\partial t^{2}}
+\]
+(Note that while I wrote these in their 1D form, they can be represented
+in n-D.)
+
+~
+
+Some important notes:
+
+~
+
+1. The Stress/Strain equation is what is very frequently solved when
+doing FEM and MPM, so it is the equation that we will examine in this
+document. (Be aware that often times when people say ``Finite Element''
+they mean using FEM to solve this equation).
+
+2. However, I want to emphasize that the FEM and MPM methods are at
+their most fundimental level simply a means of solving any ODE or
+PDE. The set of values we obtain at the end of the FEM or MPM method
+is used to obtain an approximate representation of ``$u(x)$'' (or
+``$u(x,y,...)$'') at each timestep!
+
+3. The process we go through to obtain the FEM and MPM algorithms
+results in a representation of these equations that are very different
+in appearance to the original equations.
+
+4. The process we describe of solving a FEM or MPM method often requires
+constructing large matrices and solving large systems of equations,
+but in many cases the actual computer algorithm will not construct
+these matrices, but rather do the equivalent through other iterative
+or algorithmic means. You might ask yourself, ``Wait, what happened
+to the \_\_\_\_\_\_ matrix? I don't see it anywhere in this algorithm!''
+Yup, you don't see it anywhere in that algorithm. But the mathematical
+equivalent is there... somewhere.
+
+~
+
+\textbf{Review of the standard Strong Form to Weak Form to Discretization
+of the Finite Element Method}
+
+~
+
+~
+
+\textbf{Strong Form to Weak Form:}
+
+~
+
+First, we have:
+
+\[
+\frac{d}{dx}[A(x)E(x)\frac{du(x,t)}{dx}]+f(x,t)=\rho(x)A(x)a(x,t)
+\]
+
+
+(With units:)
+
+\[
+(\frac{1}{m})\left((m^{2})(\frac{kg\cdot m/s^{2}}{m^{2}})(\frac{m}{m})\right)+\frac{(kg\cdot m/s^{2})}{m}=(\frac{kg}{m^{3}})(m^{2})(\frac{m}{s^{2}})
+\]
+
+
+(simplifying:)
+
+\[
+\left((\frac{kg\cdot m/s^{2}}{m})\right)+\frac{(kg\cdot m/s^{2})}{m}=\frac{(kg\cdot m/s^{2})}{m}
+\]
+
+
+$u(x,t)$ is displacement. {[}$m${]}
+
+$a(x,t)$ is the acceleration. Put another way, $a(x,t)=\frac{d^{2}u(x,t)}{dt^{2}}$.
+{[}$m/s^{2}${]}
+
+$f(x,t)$ is the ``body force'' (really a ``force density'') (usually
+something like gravity) {[}$N/m${]}
+
+$A(x)$ is the cross sectional area of a bar. (Time invariant). {[}$m^{2}${]}
+
+$E(x)$ is the Young's Modulous of the bar. (Time invariant). {[}$N/m^{2}${]}
+
+$\rho(x)$ is a volume-mass-density (mass per unit volume), which
+makes $\rho(x)A(x)$ a linear-mass-density (mass per unit length).
+(Time invariant). {[}$kg/m^{3}]$
+
+~
+
+Continuing, we integrate everywhere over the domain and multiply by
+a weight function $w(x,t)$:
+
+\[
+\int_{0}^{L}w(x,t)\frac{d}{dx}[A(x)E(x)\frac{du(x,t)}{dx}]dx+\int_{0}^{L}w(x,t)f(x,t)dx=\int_{0}^{L}w(x,t)\rho(x)A(x)a(x,t)dx
+\]
+
+
+Integration by parts to move the derivative in x to the weight function:
+
+\[
+w(x,t)A(x)E(x)\frac{du(x,t)}{dx}\vert_{x=0}^{x=L}-\int_{0}^{L}\frac{dw(x,t)}{dx}A(x)E(x)\frac{du(x,t)}{dx}dx+\int_{0}^{L}w(x,t)f(x,t)dx=\int_{0}^{L}w(x,t)\rho(x)A(x)a(x,t)dx
+\]
+
+
+\[
+w(L,t)A(L)E(L)\frac{du(L,t)}{dx}-w(0,t)A(0)E(0)\frac{du(0,t)}{dx}-\int_{0}^{L}\frac{dw(x,t)}{dx}A(x)E(x)\frac{du(x,t)}{dx}dx+\int_{0}^{L}w(x,t)f(x,t)dx=\int_{0}^{L}w(x,t)\rho(x)A(x)a(x,t)dx
+\]
+
+
+For sake of simplicity, the boundary terms go to zero: (TODO: find
+out why).
+
+\[
+-\int_{0}^{L}\frac{dw(x,t)}{dx}A(x)E(x)\frac{du(x,t)}{dx}dx+\int_{0}^{L}w(x,t)f(x,t)dx=\int_{0}^{L}w(x,t)\rho(x)A(x)a(x,t)dx
+\]
+
+
+~
+
+\textbf{Discretization:}
+
+~
+
+$\boldsymbol{N}$ is the vector of shape functions.
+
+$\boldsymbol{B}$ is the vector of the derivative of the shape functions.
+
+$\boldsymbol{w(t)}$ is the vector of values of $w(x,t)$ at $x=x_{i}$,
+the location of each node $i$.
+
+$\boldsymbol{u(t)}$ is the vector of values of $u(x,t)$ at $x=x_{i}$,
+the location of each node $i$.
+
+$\boldsymbol{a(t)}$ is the vector of values of $a(x,t)$ at $x=x_{i}$,
+the location of each node $i$.
+
+~
+
+\[
+w(x,t)\approx\boldsymbol{w(t)}^{T}\boldsymbol{N}=\boldsymbol{N}^{T}\boldsymbol{w(t)}
+\]
+
+
+\[
+\frac{dw(x,t)}{dx}\approx\boldsymbol{w(t)}^{T}\boldsymbol{B}=\boldsymbol{B}^{T}\boldsymbol{w(t)}
+\]
+
+
+\[
+\frac{du(x,t)}{dx}\approx\boldsymbol{u(t)}^{T}\boldsymbol{B}=\boldsymbol{B}^{T}\boldsymbol{u(t)}
+\]
+
+
+\[
+a(x,t)\approx\boldsymbol{a(t)}^{T}\boldsymbol{N}=\boldsymbol{N}^{T}\boldsymbol{a(t)}
+\]
+
+
+Thus we have:
+
+\[
+-\int_{0}^{L}\boldsymbol{w(t)}^{T}\boldsymbol{B}A(x)E(x)\boldsymbol{B}^{T}\boldsymbol{u(t)}dx+\int_{0}^{L}\boldsymbol{w(t)}^{T}\boldsymbol{N}f(x,t)dx=\int_{0}^{L}\boldsymbol{w(t)}^{T}\boldsymbol{N}\rho(x)A(x)\boldsymbol{N}^{T}\boldsymbol{a(t)}dx
+\]
+
+
+We can cancel out the $\boldsymbol{w(t)}^{T}$:
+
+\[
+-\int_{0}^{L}\boldsymbol{B}A(x)E(x)\boldsymbol{B}^{T}\boldsymbol{u(t)}dx+\int_{0}^{L}\boldsymbol{N}f(x,t)dx=\int_{0}^{L}\boldsymbol{N}\rho(x)A(x)\boldsymbol{N}^{T}\boldsymbol{a(t)}dx
+\]
+
+
+So now we construct a linear system:
+
+\[
+-\boldsymbol{K}\boldsymbol{u}+\boldsymbol{f}=\boldsymbol{M}\boldsymbol{a}
+\]
+
+
+where
+
+$\boldsymbol{K}$ is the stiffness-matrix.
+
+$\boldsymbol{u(t)}$ is the nodal displacement vector.
+
+$\boldsymbol{f}$ is the body-force vector.
+
+$\boldsymbol{M}$ is the mass matrix.
+
+$\boldsymbol{a(t)}$ is the acceleration vector.
+
+Note: $\boldsymbol{v(t)}$, the nodal velocity vector, is also known
+at the beginning of the timestep.
+
+~
+
+\[
+\boldsymbol{K}=\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx
+\]
+
+
+\[
+\boldsymbol{f}=\int_{0}^{L}\boldsymbol{N}f(x,t)dx
+\]
+
+
+\[
+\boldsymbol{M}=\int_{0}^{L}\rho(x)A(x)\boldsymbol{N}\boldsymbol{N}^{T}dx
+\]
+
+
+So we have:
+
+\[
+\left\{ -\left[\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx\right]\left\{ \boldsymbol{u(t^{n})}\right\} +\left\{ \boldsymbol{f(t^{n})}\right\} \right\} =\left[\int_{0}^{L}\rho(x)A(x)\boldsymbol{N}\boldsymbol{N}^{T}dx\right]\left\{ \boldsymbol{a(t^{n})}\right\} 
+\]
+
+
+~
+
+\textbf{Important Note:}
+
+It is here that we have two directions we can go. In the Static state,
+the accelerations are zero, so the right hand side goes to zero, and
+we have:
+
+\[
+-\left[\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx\right]\left\{ \boldsymbol{u(t^{n})}\right\} +\left\{ \boldsymbol{f(t^{n})}\right\} =0
+\]
+
+
+In this case, it usually is the displacement that is the unknown,
+and so we arange our problem into a linear system to find the displacement:
+
+\[
+\left[\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx\right]\left\{ \boldsymbol{u(t^{n})}\right\} =\left\{ \boldsymbol{f(t^{n})}\right\} 
+\]
+
+
+\[
+\left\{ \boldsymbol{u(t^{n})}\right\} =\left[\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx\right]^{-1}\left\{ \boldsymbol{f(t^{n})}\right\} 
+\]
+
+
+However, when the acceleration is non-zero, we usually flip the problem
+around, and assume that the displacement is known, and that it's the
+acceleration that is unknown. The acceleration is solved for so that
+we can calculate the changes to the displacement in time, to form
+the initial conditions of the following timestep:
+
+\[
+\left\{ \boldsymbol{a(t^{n})}\right\} =\left[\int_{0}^{L}\rho(x)A(x)\boldsymbol{N}\boldsymbol{N}^{T}dx\right]^{-1}\left\{ -\left[\int_{0}^{L}A(x)E(x)\boldsymbol{B}\boldsymbol{B}^{T}dx\right]\left\{ \boldsymbol{u(t^{n})}\right\} +\left\{ \boldsymbol{f(t^{n})}\right\} \right\} 
+\]
+
+
+\textbf{Important Note:}
+
+This is one of those times where the formal mathematical notation
+looks a lot different than the computer-code. When this time-variant
+equation is programmed into a computer, it is very rare to actually
+construct the global matrices in order to solve for the acceleration.
+It is more typical, rather, to iterate over each element, calculating
+for each the force it exerts on the nodes it touches, and then summing
+on each node all the forces acting on that node. Then the code forward-integrates
+in time to find the new location (or displacement) on each node.
+
+\[
+\]
 \[
 \]
 
